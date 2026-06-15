@@ -1,0 +1,55 @@
+# 定时抓取 Trakt 观影数据
+# 每 2 小时执行一次，或手动触发
+name: Fetch Trakt Data
+
+on:
+  schedule:
+    # 每 2 小时运行一次（UTC 时间）
+    - cron: '0 */2 * * *'
+  # 允许手动触发（用于首次运行或调试）
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    # 超时时间：10 分钟，防止 API 请求卡死
+    timeout-minutes: 10
+
+    steps:
+      # ① 检出代码（包含 data/trakt.db 历史数据）
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      # ② 配置 Python 环境
+      - name: 配置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ③ 安装依赖
+      - name: 安装 Python 依赖
+        run: pip install -r requirements.txt
+
+      # ④ 执行数据抓取
+      - name: 抓取 Trakt 数据
+        run: python -m scripts.fetch
+        env:
+          TRAKT_CLIENT_ID: ${{ secrets.TRAKT_CLIENT_ID }}
+          TRAKT_USERNAME:  ${{ secrets.TRAKT_USERNAME }}
+          TMDB_API_KEY:    ${{ secrets.TMDB_API_KEY }}
+
+      # ⑤ 如果数据有变更，提交并推送
+      # git diff --cached --quiet 检查暂存区是否有变更
+      # 无变更时静默退出，有变更时提交并推送
+      - name: 提交数据变更
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/trakt.db data/reports/
+          if git diff --cached --quiet; then
+            echo "数据无变更，跳过提交"
+          else
+            git commit -m "data: 自动更新 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            git push
+          fi

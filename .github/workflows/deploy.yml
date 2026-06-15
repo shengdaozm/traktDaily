@@ -1,0 +1,67 @@
+# 部署前端页面到 GitHub Pages
+# 当 data/trakt.db 或 web/ 目录有变更时自动触发
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # 只在这些路径有变更时才触发部署
+      - 'data/**'
+      - 'web/**'
+      - 'scripts/render.py'
+      - 'scripts/stats.py'
+  # 允许手动触发（用于首次部署）
+  workflow_dispatch:
+
+# 设置 GitHub Pages 所需的权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 防止多个部署任务同时运行
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # ① 检出代码
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      # ② 配置 Python 环境
+      - name: 配置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ③ 安装依赖
+      - name: 安装 Python 依赖
+        run: pip install -r requirements.txt
+
+      # ④ 生成前端 JSON 数据
+      # render.py 读取 data/trakt.db，生成 web/data/*.json 供前端消费
+      - name: 生成前端数据
+        run: python -m scripts.render
+        # （阶段二实现，目前 render.py 为空，不会报错）
+        continue-on-error: true
+
+      # ⑤ 上传 Pages 产物
+      - name: 上传 Pages 产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/
+
+      # ⑥ 部署到 GitHub Pages
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

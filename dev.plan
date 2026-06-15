@@ -1,0 +1,379 @@
+# traktDaily 开发计划
+
+## 1. 项目概述
+
+定时抓取 Trakt 观影数据，按月聚合统计，以静态网页展示月度/年度报告，预留大模型总结接口。
+
+---
+
+## 2. 技术架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     GitHub Actions                          │
+│  ┌──────────────────┐    ┌──────────────────┐              │
+│  │ fetch.yml        │    │ deploy.yml       │              │
+│  │ cron: 0 */2 * * *│    │ on: push (main)  │              │
+│  └────────┬─────────┘    └────────┬─────────┘              │
+│           │ ① 抓取+写入              │ ③ 构建+部署            │
+│           ▼                        ▼                        │
+│  ┌────────────────────────────────────────────┐             │
+│  │              scripts/                       │             │
+│  │  fetch.py  │  db.py  │  stats.py  │ report │             │
+│  └──────────────────┬─────────────────────────┘             │
+│                     │                                       │
+│  ┌──────────────────▼─────────────────────────┐             │
+│  │              data/                          │             │
+│  │  trakt.db (SQLite)  │  reports/*.json       │             │
+│  └──────────────────┬─────────────────────────┘             │
+│                     │ ② git commit & push                   │
+│                     ▼                                       │
+│              触发 deploy.yml                                 │
+│                     │                                       │
+│  ┌──────────────────▼─────────────────────────┐             │
+│  │              web/ (GitHub Pages)             │             │
+│  │  index.html + Chart.js + JSON 数据           │             │
+│  └─────────────────────────────────────────────┘             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+- **数据层**：SQLite（`data/trakt.db`），单文件，支持 SQL 快速按 key 查询
+- **后端**：Python 脚本（抓取、入库、统计、生成 JSON）
+- **前端**：纯静态 HTML + Chart.js CDN，读取 JSON 渲染图表
+- **调度**：GitHub Actions cron 每 2 小时触发，数据有变更则 push 触发前端重部署
+
+---
+
+## 3. 目录结构
+
+```
+traktDaily/
+├── .github/workflows/
+│   ├── fetch.yml              # 定时抓取工作流
+│   └── deploy.yml             # 前端构建+部署工作流 (GitHub Pages)
+├── scripts/
+│   ├── fetch.py               # 主入口：拉取 Trakt API → 写入 SQLite
+│   ├── db.py                  # SQLite 封装：建表、插入、查询、按月聚合
+│   ├── tmdb.py                # TMDB API 封装：搜索媒体、下载海报图片
+│   ├── stats.py               # 统计模块：月度/年度报告数据生成
+│   ├── render.py              # 将 stats 数据渲染为 web/*.json 供前端消费
+│   └── config.py              # Trakt API 密钥、路径等配置
+├── data/
+│   ├── trakt.db               # SQLite 数据库（随 git 提交）
+│   └── reports/               # 生成的报告 JSON（供本地调试，一般不提交）
+├── web/
+│   ├── index.html             # 主页面
+│   ├── data/                  # 部署时 render.py 生成的 JSON 数据
+│   │   ├── summary.json       # 总览数据
+│   │   ├── monthly.json       # 月度明细
+│   │   └── yearly.json        # 年度汇总
+│   └── assets/
+│       └── style.css
+├── requirements.txt
+├── dev.plan                   # 本文件
+└── README.md
+```
+
+---
+
+## 4. 数据库设计 (SQLite)
+
+### 4.1 表结构
+
+```sql
+-- 观影记录表
+-- 每条记录对应一次 Trakt 观影历史事件，同时存储 Trakt 返回的核心元数据
+CREATE TABLE IF NOT EXISTS plays (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    trakt_id    INTEGER NOT NULL,          -- Trakt 唯一 ID（单集/电影）
+    tmdb_id     INTEGER,                  -- TMDB ID（用于获取海报）
+    imdb_id     TEXT,                     -- IMDb ID
+    title       TEXT    NOT NULL,
+    year        INTEGER,
+    media_type  TEXT    NOT NULL,          -- 'movie' | 'episode'
+    runtime     INTEGER,                  -- 分钟
+    genres      TEXT,                     -- JSON 数组，如 '["action","sci-fi"]'
+    overview    TEXT,                     -- 剧情简介
+    rating      REAL,                     -- 评分（0-10）
+    votes       INTEGER,                  -- 评分人数
+    watched_at  TEXT    NOT NULL,          -- ISO 8601: '2026-06-15T12:00:00.000Z'
+    created_at  TEXT    DEFAULT (datetime('now')),
+    UNIQUE(trakt_id, watched_at)
+);
+
+-- 媒体元数据表
+-- 每个媒体（电影/剧集）只存一条，包含 Trakt 返回的全部详情 + TMDB 补充的海报
+CREATE TABLE IF NOT EXISTS media (
+    trakt_id      INTEGER PRIMARY KEY,     -- 电影用 movie.trakt_id，剧集用 show.trakt_id
+    tmdb_id       INTEGER,
+    imdb_id       TEXT,
+    title         TEXT    NOT NULL,
+    year          INTEGER,
+    media_type    TEXT    NOT NULL,          -- 'movie' | 'show'
+    slug          TEXT,                      -- Trakt URL slug
+    tagline       TEXT,                      -- 电影标语
+    overview      TEXT,                      -- 剧情简介
+    poster_url    TEXT,                      -- TMDB 海报 CDN URL
+    backdrop_url  TEXT,                      -- TMDB 背景图 CDN URL
+    genres        TEXT,                      -- JSON 数组，如 '["动作","科幻"]'
+    runtime       INTEGER,                  -- 分钟
+    rating        REAL,                     -- 评分（0-10）
+    votes         INTEGER,                  -- 评分人数
+    certification TEXT,                      -- 分级，如 'PG-13', 'TV-MA'
+    country       TEXT,                      -- 制片国家，如 'us'
+    language      TEXT,                      -- 语言，如 'en'
+    network       TEXT,                      -- 播出网络（剧集），如 'Netflix'
+    status        TEXT,                      -- 状态，如 'released', 'ended'
+    trailer_url   TEXT,                      -- 预告片链接
+    homepage      TEXT,                      -- 官网
+    first_aired   TEXT,                      -- 首播/上映日期
+    comment_count INTEGER,                   -- Trakt 评论数
+    updated_at    TEXT    DEFAULT (datetime('now'))
+);
+
+-- 月度统计表（物化聚合，加速查询）
+CREATE TABLE IF NOT EXISTS monthly_stats (
+    year_month  TEXT PRIMARY KEY,          -- '2026-06'
+    total_count INTEGER DEFAULT 0,
+    total_minutes INTEGER DEFAULT 0,
+    movie_count INTEGER DEFAULT 0,
+    episode_count INTEGER DEFAULT 0,
+    updated_at  TEXT DEFAULT (datetime('now'))
+);
+
+-- 常用索引
+CREATE INDEX IF NOT EXISTS idx_plays_watched_at ON plays(watched_at);
+CREATE INDEX IF NOT EXISTS idx_plays_media_type ON plays(media_type);
+CREATE INDEX IF NOT EXISTS idx_plays_trakt_id ON plays(trakt_id);
+CREATE INDEX IF NOT EXISTS idx_plays_tmdb_id ON plays(tmdb_id);
+```
+
+### 4.2 关键查询示例
+
+```sql
+-- 按 key 快速查询某天的观影
+SELECT * FROM plays WHERE watched_at >= '2026-06-15' AND watched_at < '2026-06-16';
+
+-- 本月统计
+SELECT COUNT(*) AS cnt, SUM(runtime) AS total_min
+FROM plays WHERE watched_at >= '2026-06-01' AND watched_at < '2026-07-01';
+
+-- 年度 Top 媒体
+SELECT title, COUNT(*) AS watch_count
+FROM plays WHERE watched_at >= '2026-01-01'
+GROUP BY trakt_id ORDER BY watch_count DESC LIMIT 10;
+```
+
+---
+
+## 5. 开发阶段
+
+### 阶段一：基础数据管道（预计 2-3 天）
+
+| 任务 | 文件 | 说明 |
+|------|------|------|
+| 项目骨架搭建 | `requirements.txt`, `README.md` | 初始化 Git 仓库 |
+| Trakt API 认证 | `scripts/config.py` | OAuth 或 API Key 读取 |
+| SQLite 数据库层 | `scripts/db.py` | 建表、CRUD、按月聚合 |
+| 数据抓取脚本 | `scripts/fetch.py` | 调用 Trakt `/history` 接口，去重写入 |
+| GitHub Actions 定时任务 | `.github/workflows/fetch.yml` | cron `0 */2 * * *` |
+
+**验收标准**：Actions 每 2 小时成功跑一次，新增观影记录正确写入 `data/trakt.db`
+
+---
+
+### 阶段二：统计与报告（预计 2 天）
+
+| 任务 | 文件 | 说明 |
+|------|------|------|
+| 统计模块 | `scripts/stats.py` | 月度/年度聚合：观影时长、数量、类型分布、Top 作品 |
+| JSON 报告生成 | `scripts/render.py` | 生成 `summary.json`, `monthly.json`, `yearly.json` |
+| 数据变更检测 | `scripts/fetch.py` 末尾 | 有新区间数据才 commit，避免空提交 |
+
+**验收标准**：`data/reports/` 目录下正确产出每月 JSON 报告
+
+---
+
+### 阶段三：前端展示（预计 2-3 天）
+
+| 任务 | 文件 | 说明 |
+|------|------|------|
+| 主页面布局 | `web/index.html` | 响应式设计，总体观影数据卡片 |
+| 折线图：月度趋势 | `web/index.html` | Chart.js 折线图，每月观影时长/数量 |
+| 柱状图：类型分布 | `web/index.html` | 按 media_type 的 watching 分布 |
+| 排行榜 | `web/index.html` | Top 10 观看最多次的影片/剧集 |
+| 部署工作流 | `.github/workflows/deploy.yml` | `on: push` 触发，构建并部署到 GitHub Pages |
+
+**验收标准**：打开 `https://<user>.github.io/traktDaily/` 能看到精美图表
+
+---
+
+### 阶段四：大模型接入（未来）
+
+| 任务 | 说明 |
+|------|------|
+| 月度影评总结 | 将月度 Top5 媒体 + 观影时长发给 LLM，生成一段中文总结 |
+| 年度回顾 | 年度全量数据 → LLM 生成类似 Spotify Wrapped 的回顾文案 |
+| 在 HTML 页面展示 | 总结文本渲染到页面顶部，配合精美排版 |
+
+---
+
+## 6. GitHub Actions 工作流设计
+
+### 6.1 `fetch.yml` - 数据抓取
+
+```yaml
+name: Fetch Trakt Data
+on:
+  schedule:
+    - cron: '0 */2 * * *'      # 每 2 小时
+  workflow_dispatch:             # 手动触发
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - run: python scripts/fetch.py
+        env:
+          TRAKT_CLIENT_ID: ${{ secrets.TRAKT_CLIENT_ID }}
+      - name: Commit & Push if data changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/trakt.db data/reports/
+          git diff --cached --quiet || (git commit -m "data: auto update $(date -u +%Y-%m-%dT%H:%M:%SZ)" && git push)
+```
+
+### 6.2 `deploy.yml` - 前端部署
+
+```yaml
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/**'
+      - 'web/**'
+      - 'scripts/render.py'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: python scripts/render.py          # 生成 web/data/*.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/
+      - uses: actions/deploy-pages@v4
+```
+
+> **关键链路**：`fetch.yml` 发现新数据 → `git push` → 触发 `deploy.yml` → 重新构建前端 JSON → 部署 GitHub Pages
+
+---
+
+## 7. 待定决策
+
+| 议题 | 选项 | 建议 |
+|------|------|------|
+| Trakt API 认证方式 | OAuth2 vs 简单 API Key | 先用 API Key（简单），后续升级 OAuth |
+| 前端框架 | 纯 HTML + CDN vs React/Vue | 先用纯 HTML+Chart.js 快速出 MVP |
+| 数据库替代方案 | SQLite vs JSON 文件 | SQLite，查询效率高且天然防重复写入 |
+| 仓库是否提交 data 目录 | 是 vs 用 Artifacts | 提交 data 到 Git，方便做 diff 和版本回溯 |
+
+---
+
+## 8. TMDB 集成（海报/元数据）
+
+Trakt 自身不托管图片，需要接入 [TMDB API](https://developer.themoviedb.org/) 获取海报、背景图等视觉资源。
+
+### 8.1 TMDB 用途
+
+| 功能 | 说明 |
+|------|------|
+| 获取海报 | `POSTER_URL = https://image.tmdb.org/t/p/w500/{poster_path}` |
+| 获取背景图 | 用于报告头图、年度回顾封面 |
+| 获取元数据 | 补充 Trakt 可能缺失的简介、演员、评分、类型、时长等 |
+
+### 8.2 集成方式（参考 Yamtrack 的 `tmdb.py`）
+
+- 在 `config.py` 中新增 `TMDB_API_KEY` 配置
+- 在 `scripts/tmdb.py` 中封装 TMDB API 调用（搜索、详情、图片 URL 拼接）
+- **海报不下载到本地**：直接拼接 TMDB CDN URL（`https://image.tmdb.org/t/p/w500{path}`），前端通过 `<img>` 引用即可，无需占用仓库空间
+- 在 `media` 表中存储 `poster_url` 和 `backdrop_url`，前端直接读取渲染
+- 使用 `requests-ratelimiter` 控制 API 调用频率，避免被限流
+- TMDB 数据首次拉取后缓存到 SQLite，后续优先读缓存，减少 API 调用
+
+### 8.3 Secrets 配置
+
+```
+# GitHub Actions Secrets 需配置：
+TRAKT_CLIENT_ID   # Trakt API Client ID
+TRAKT_USERNAME    # Trakt 用户名（用于查询公开观影历史）
+TMDB_API_KEY      # TMDB API Key (用于获取海报/元数据)
+LLM_API_KEY       # (未来) 大模型 API Key
+```
+
+---
+
+## 9. 代码风格规范
+
+- **所有 Python 脚本必须添加中文注释**，说明函数用途、参数含义、关键逻辑
+- SQL 语句添加注释说明查询目的
+- YAML 工作流添加步骤级别的注释
+- HTML/CSS/JS 按模块分段注释，说明每个区块的作用
+- 避免注释啰嗦重复代码逻辑，侧重解释「为什么这样做」和「做什么」
+
+---
+
+## 10. 参考项目：Yamtrack
+
+[Yamtrack](https://github.com/FuzzyGrim/Yamtrack)（2.8k Stars，AGPL-3.0）是一个 Django 自托管媒体追踪器。与我们定位不同（全栈 Web App vs 静态报告），但以下模块有直接参考价值：
+
+### 10.1 可直接借鉴的模块
+
+| 文件 | 行数 | 参考内容 |
+|------|------|----------|
+| `app/providers/tmdb.py` | 609 | 完整 TMDB API 封装，含 `get_image_url()`、`search()`、`movie()`、`tv()`、`episode()`，以及缓存策略和 `requests-ratelimiter` 限流 |
+| `integrations/imports/trakt.py` | 424 | Trakt OAuth + `/history` 分页抓取、`process_watched_movie()`/`process_watched_episode()` 数据结构映射 |
+| `app/statistics.py` | 391 | 统计与可视化：`get_activity_data()` 热力图、`calculate_streaks()` 连续天数、`get_score_distribution()` 评分分布、`get_media_type_distribution()` 类型饼图 |
+
+### 10.2 纳入设计的改进点
+
+| 改进 | 说明 |
+|------|------|
+| **海报不下载，直接用 TMDB CDN** | `f"https://image.tmdb.org/t/p/w500{poster_path}"` 前端引用即可，无需本地存储 |
+| **`requests-ratelimiter` 限流** | 避免 Trakt/TMDB API 请求过频被封，Yamtrack 的 `pyproject.toml` 第 37 行已采用 |
+| **活动热力图** | GitHub 风格日历热力图（`get_activity_data`），展示每日观影活跃度 → 纳入阶段三前端 |
+| **TMDB `find()` 接口** | 用 Trakt 返回的 TMDB ID 反向查询完整元数据（海报、简介、评分、演员、类型） |
+| **连续天数统计** | `calculate_streaks()` 当前连续观影天数 + 最长连续天数 → 纳入阶段二统计 |
+| **评分分布柱状图** | 0-10 分分布统计，配合 `average_score` 计算 → 纳入阶段二统计 |
+
+### 10.3 与 Yamtrack 的架构差异
+
+| 维度 | Yamtrack | traktDaily |
+|------|----------|------------|
+| 框架 | Django + Celery + Redis | 纯 Python 脚本 |
+| 运行方式 | Docker 常驻服务 | GitHub Actions 定时 cron |
+| 数据库 | PostgreSQL/SQLite + Redis | 仅 SQLite（单文件） |
+| 用户系统 | 多用户 + OAuth | 单用户，无鉴权 |
+| 前端 | Django 模板 + TailwindCSS | 纯静态 HTML + Chart.js CDN |
+| 部署 | Docker Compose | GitHub Pages |

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>traktDaily - 我的观影报告</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
+    .container { max-width: 960px; margin: 0 auto; padding: 40px 20px; }
+    header { text-align: center; margin-bottom: 48px; }
+    header h1 { font-size: 2rem; color: #58a6ff; margin-bottom: 8px; }
+    header p { color: #8b949e; font-size: 0.95rem; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+    .card h2 { font-size: 1.1rem; color: #e6edf3; margin-bottom: 16px; }
+    /* 统计卡片 */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; text-align: center; }
+    .stat .value { font-size: 2rem; font-weight: 700; color: #58a6ff; }
+    .stat .label { font-size: 0.85rem; color: #8b949e; margin-top: 4px; }
+    /* 排行榜 */
+    .rank-list { list-style: none; }
+    .rank-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #21262d; }
+    .rank-item:last-child { border-bottom: none; }
+    .rank-num { width: 28px; height: 28px; background: #21262d; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #8b949e; flex-shrink: 0; }
+    .rank-item:nth-child(1) .rank-num { background: #f0c040; color: #0d1117; }
+    .rank-item:nth-child(2) .rank-num { background: #a0a0a0; color: #0d1117; }
+    .rank-item:nth-child(3) .rank-num { background: #cd7f32; color: #0d1117; }
+    .rank-poster { width: 48px; height: 72px; border-radius: 4px; object-fit: cover; background: #21262d; flex-shrink: 0; }
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-info .title { font-size: 0.95rem; color: #e6edf3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-info .meta { font-size: 0.8rem; color: #8b949e; margin-top: 2px; }
+    .rank-info .genres { margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; }
+    .rank-info .genre-tag { font-size: 0.7rem; padding: 1px 8px; background: #1f6feb22; color: #58a6ff; border-radius: 10px; border: 1px solid #1f6feb44; }
+    .rank-stats { text-align: right; flex-shrink: 0; }
+    .rank-stats .count { font-size: 1.1rem; font-weight: 700; color: #58a6ff; }
+    .rank-stats .duration { font-size: 0.75rem; color: #8b949e; }
+    .loading { text-align: center; padding: 40px; color: #8b949e; }
+    /* 媒体库网格 */
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    .media-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
+    .media-card:hover { border-color: #58a6ff; }
+    .media-card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; background: #21262d; }
+    .media-card .card-body { padding: 10px 12px; }
+    .media-card .card-title { font-size: 0.85rem; color: #e6edf3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .media-card .card-year { font-size: 0.75rem; color: #8b949e; }
+    .media-card .card-rating { font-size: 0.75rem; color: #3fb950; margin-top: 2px; }
+    footer { text-align: center; margin-top: 48px; padding: 20px; color: #484f58; font-size: 0.85rem; }
+    footer a { color: #58a6ff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>traktDaily</h1>
+      <p>观影数据自动同步 · 每 2 小时更新</p>
+    </header>
+
+    <div id="loading" class="loading">正在加载数据...</div>
+
+    <!-- 数据概览 -->
+    <div class="stats" id="stats-cards" style="display:none;"></div>
+
+    <!-- 月度趋势 -->
+    <div class="card" id="trend-chart-card" style="display:none;">
+      <h2>月度观影趋势</h2>
+      <canvas id="trend-chart" height="300"></canvas>
+    </div>
+
+    <!-- Top 10 排行榜 -->
+    <div class="card" id="top-chart-card" style="display:none;">
+      <h2>观影排行榜 Top 10</h2>
+      <ul class="rank-list" id="rank-list"></ul>
+    </div>
+
+    <!-- 媒体库 -->
+    <div class="card" id="media-grid-card" style="display:none;">
+      <h2>媒体库</h2>
+      <div class="media-grid" id="media-grid"></div>
+    </div>
+
+    <footer>
+      <p>数据来源 <a href="https://trakt.tv" target="_blank">Trakt</a> · 海报来自 <a href="https://themoviedb.org" target="_blank">TMDB</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a></p>
+    </footer>
+  </div>
+
+  <script>
+    async function loadData() {
+      try {
+        const [summaryResp, mediaResp] = await Promise.all([
+          fetch('data/summary.json'),
+          fetch('data/media.json').catch(() => null)
+        ]);
+        const data = await summaryResp.json();
+        const mediaList = mediaResp ? await mediaResp.json() : [];
+
+        document.getElementById('loading').style.display = 'none';
+
+        // 统计卡片
+        renderStats(data);
+        // 月度趋势图
+        if (data.monthly_stats && data.monthly_stats.length > 0) {
+          renderTrendChart(data.monthly_stats);
+        }
+        // 排行榜
+        if (data.top_media && data.top_media.length > 0) {
+          renderTopList(data.top_media);
+        }
+        // 媒体库
+        if (mediaList.length > 0) {
+          renderMediaGrid(mediaList);
+        }
+      } catch (err) {
+        document.getElementById('loading').textContent = '数据加载失败，请确保已运行过数据抓取。';
+        console.error(err);
+      }
+    }
+
+    function renderStats(data) {
+      const container = document.getElementById('stats-cards');
+      container.style.display = '';
+      const cards = [
+        { value: (data.total_plays || 0).toLocaleString(), label: '总观影记录' },
+        { value: (data.total_minutes || 0).toLocaleString(), label: '总时长（分钟）' },
+        { value: (data.total_movies || 0).toLocaleString(), label: '电影' },
+        { value: (data.total_episodes || 0).toLocaleString(), label: '剧集' },
+      ];
+      container.innerHTML = cards.map(c =>
+        `<div class="stat"><div class="value">${c.value}</div><div class="label">${c.label}</div></div>`
+      ).join('');
+    }
+
+    function renderTrendChart(monthlyStats) {
+      document.getElementById('trend-chart-card').style.display = '';
+      const stats = [...monthlyStats].reverse(); // 时间升序
+      const ctx = document.getElementById('trend-chart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: stats.map(s => s.year_month),
+          datasets: [
+            {
+              label: '观影次数',
+              data: stats.map(s => s.total_count),
+              borderColor: '#58a6ff',
+              backgroundColor: 'rgba(88,166,255,0.1)',
+              fill: true, tension: 0.3, yAxisID: 'y',
+            },
+            {
+              label: '时长（分钟）',
+              data: stats.map(s => s.total_minutes),
+              borderColor: '#3fb950',
+              backgroundColor: 'rgba(63,185,80,0.1)',
+              fill: true, tension: 0.3, yAxisID: 'y1',
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: '#8b949e' } } },
+          scales: {
+            x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+            y: { type: 'linear', position: 'left', title: { display: true, text: '次数', color: '#8b949e' }, ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+            y1: { type: 'linear', position: 'right', title: { display: true, text: '分钟', color: '#8b949e' }, ticks: { color: '#8b949e' }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderTopList(topMedia) {
+      document.getElementById('top-chart-card').style.display = '';
+      const list = document.getElementById('rank-list');
+      list.innerHTML = topMedia.map((m, i) => {
+        const genres = m.genres ? JSON.parse(m.genres) : [];
+        const hours = Math.floor((m.total_minutes || 0) / 60);
+        return `
+          <li class="rank-item">
+            <span class="rank-num">${i + 1}</span>
+            ${m.poster_url ? `<img class="rank-poster" src="${m.poster_url}" alt="${m.title}" loading="lazy">` : '<div class="rank-poster"></div>'}
+            <div class="rank-info">
+              <div class="title">${escHtml(m.title)}</div>
+              <div class="meta">${m.media_type === 'movie' ? '电影' : '剧集'} ${m.rating ? '· ⭐' + m.rating : ''}</div>
+              <div class="genres">${genres.slice(0, 3).map(g => `<span class="genre-tag">${escHtml(g)}</span>`).join('')}</div>
+            </div>
+            <div class="rank-stats">
+              <div class="count">${m.watch_count}次</div>
+              <div class="duration">${hours}h</div>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+
+    function renderMediaGrid(mediaList) {
+      document.getElementById('media-grid-card').style.display = '';
+      const grid = document.getElementById('media-grid');
+      grid.innerHTML = mediaList.filter(m => m.poster_url).slice(0, 24).map(m => {
+        return `
+          <div class="media-card">
+            <img src="${m.poster_url}" alt="${m.title}" loading="lazy">
+            <div class="card-body">
+              <div class="card-title" title="${escHtml(m.title)}">${escHtml(m.title)}</div>
+              <div class="card-year">${m.year || ''} ${m.certification ? '· ' + m.certification : ''}</div>
+              ${m.rating ? `<div class="card-rating">⭐ ${m.rating}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
