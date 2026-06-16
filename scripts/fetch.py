@@ -15,7 +15,7 @@ Trakt 数据抓取主入口
 import json
 import sys
 import requests
-from pyrate_limiter import Duration, Limiter, RequestRate
+from pyrate_limiter import Duration, Limiter, Rate
 from requests_ratelimiter import LimiterAdapter
 
 from scripts.config import (
@@ -37,7 +37,7 @@ from scripts.tmdb import get_tmdb_images
 
 # ── 请求频率控制 ──
 # Trakt API 限制为每分钟约 1000 次（非 OAuth 更低），这里设为每秒 2 次
-_trakt_limiter = Limiter(RequestRate(2, Duration.SECOND))
+_trakt_limiter = Limiter(Rate(2, Duration.SECOND))
 _trakt_adapter = LimiterAdapter(limiter=_trakt_limiter)
 
 _session = requests.Session()
@@ -298,15 +298,18 @@ def run():
                 if media_info:
                     # 从 TMDB 补充海报和背景图
                     clean_title = _clean_title(media_info["title"], media_info["media_type"])
-                    tmdb_images = get_tmdb_images(
-                        tmdb_id=media_info.get("tmdb_id"),
-                        title=clean_title,
-                        media_type=media_info["media_type"],
-                        year=media_info.get("year"),
-                    )
-                    if tmdb_images:
-                        media_info["poster_url"] = tmdb_images.get("poster_url")
-                        media_info["backdrop_url"] = tmdb_images.get("backdrop_url")
+                    try:
+                        tmdb_images = get_tmdb_images(
+                            tmdb_id=media_info.get("tmdb_id"),
+                            title=clean_title,
+                            media_type=media_info["media_type"],
+                            year=media_info.get("year"),
+                        )
+                        if tmdb_images:
+                            media_info["poster_url"] = tmdb_images.get("poster_url")
+                            media_info["backdrop_url"] = tmdb_images.get("backdrop_url")
+                    except Exception as e:
+                        print(f"  [TMDB] 获取图片失败 ({media_info['title']}): {e}")
 
                     upsert_media(media_info)
                     processed_media.add(media_trakt_id)

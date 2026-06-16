@@ -6,14 +6,14 @@ Trakt 已返回完整的元数据（genres, overview, rating 等），TMDB 只�
 """
 
 import requests
-from pyrate_limiter import Duration, Limiter, RequestRate
+from pyrate_limiter import Duration, Limiter, Rate
 from requests_ratelimiter import LimiterAdapter
 
 from scripts.config import TMDB_API_KEY, TMDB_BASE_URL, TMDB_IMAGE_BASE, TMDB_LANG
 
 # ── 请求频率控制 ──
 # TMDB API 限制为每秒约 50 次，这里设为每秒 4 次留足安全边界
-_tmdb_limiter = Limiter(RequestRate(4, Duration.SECOND))
+_tmdb_limiter = Limiter(Rate(4, Duration.SECOND))
 _tmdb_adapter = LimiterAdapter(limiter=_tmdb_limiter)
 
 _session = requests.Session()
