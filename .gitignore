@@ -25,3 +25,7 @@ Thumbs.db
 data/*.db-journal
 data/*.db-wal
 data/*.db-shm
+data/reports/
+
+# 前端生成数据（deploy 时由 render.py 生成）
+web/data/

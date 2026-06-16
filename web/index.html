@@ -3,81 +3,394 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>traktDaily - 我的观影报告</title>
+  <title>traktDaily — 我的观影报告</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
-    .container { max-width: 960px; margin: 0 auto; padding: 40px 20px; }
-    header { text-align: center; margin-bottom: 48px; }
-    header h1 { font-size: 2rem; color: #58a6ff; margin-bottom: 8px; }
-    header p { color: #8b949e; font-size: 0.95rem; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 24px; margin-bottom: 24px; }
-    .card h2 { font-size: 1.1rem; color: #e6edf3; margin-bottom: 16px; }
-    /* 统计卡片 */
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .stat { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; text-align: center; }
-    .stat .value { font-size: 2rem; font-weight: 700; color: #58a6ff; }
-    .stat .label { font-size: 0.85rem; color: #8b949e; margin-top: 4px; }
-    /* 排行榜 */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0e14;
+      --surface: rgba(22, 27, 36, 0.85);
+      --surface-hover: rgba(30, 36, 46, 0.9);
+      --border: rgba(48, 54, 61, 0.6);
+      --primary: #58a6ff;
+      --primary-glow: rgba(88, 166, 255, 0.25);
+      --accent: #f0c040;
+      --accent-glow: rgba(240, 192, 64, 0.3);
+      --success: #3fb950;
+      --text: #c9d1d9;
+      --text-bright: #e6edf3;
+      --muted: #8b949e;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── 背景装饰 ── */
+    body::before {
+      content: '';
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(88, 166, 255, 0.06) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 50% at 80% 80%, rgba(240, 192, 64, 0.04) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .container { max-width: 1040px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center; padding: 64px 0 40px;
+      position: relative;
+    }
+    .hero-icon {
+      display: inline-block; width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      border-radius: 18px; margin-bottom: 20px;
+      box-shadow: 0 8px 32px var(--primary-glow);
+      font-size: 32px; line-height: 64px;
+    }
+    .hero h1 {
+      font-size: 2.4rem; font-weight: 800; color: var(--text-bright);
+      letter-spacing: -0.5px; margin-bottom: 6px;
+    }
+    .hero h1 span { background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero .subtitle { font-size: 0.95rem; color: var(--muted); }
+
+    /* ── 统计卡片 ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px 20px; text-align: center;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+      cursor: default;
+    }
+    .stat-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--primary);
+      box-shadow: 0 8px 24px var(--primary-glow);
+    }
+    .stat-card .stat-icon { font-size: 1.5rem; margin-bottom: 8px; }
+    .stat-card .stat-value { font-size: 2rem; font-weight: 800; color: var(--text-bright); font-variant-numeric: tabular-nums; }
+    .stat-card .stat-label { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+    .stat-card:nth-child(1) .stat-value { color: var(--primary); }
+    .stat-card:nth-child(2) .stat-value { color: var(--accent); }
+    .stat-card:nth-child(3) .stat-value { color: var(--success); }
+    .stat-card:nth-child(4) .stat-value { color: #8b5cf6; }
+
+    /* ── Tab 导航 ── */
+    .tab-nav {
+      display: flex; gap: 4px; margin-bottom: 28px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 4px;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      position: sticky; top: 16px; z-index: 100;
+    }
+    .tab-btn {
+      flex: 1; padding: 10px 16px; border: none; background: transparent;
+      color: var(--muted); font-size: 0.9rem; font-weight: 600;
+      border-radius: var(--radius-sm); cursor: pointer;
+      transition: all var(--transition);
+    }
+    .tab-btn:hover { color: var(--text-bright); }
+    .tab-btn.active { background: rgba(88, 166, 255, 0.12); color: var(--primary); }
+
+    /* ── 卡片 ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px; margin-bottom: 24px;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      transition: border-color var(--transition);
+    }
+    .card:hover { border-color: rgba(88, 166, 255, 0.3); }
+    .card h2 {
+      font-size: 1.15rem; font-weight: 700; color: var(--text-bright);
+      margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+    }
+    .card h2 .icon { font-size: 1.2rem; }
+
+    /* ── 排行榜 ── */
     .rank-list { list-style: none; }
-    .rank-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #21262d; }
+    .rank-item {
+      display: flex; align-items: center; gap: 14px; padding: 14px 0;
+      border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+      transition: background var(--transition);
+    }
     .rank-item:last-child { border-bottom: none; }
-    .rank-num { width: 28px; height: 28px; background: #21262d; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #8b949e; flex-shrink: 0; }
-    .rank-item:nth-child(1) .rank-num { background: #f0c040; color: #0d1117; }
-    .rank-item:nth-child(2) .rank-num { background: #a0a0a0; color: #0d1117; }
-    .rank-item:nth-child(3) .rank-num { background: #cd7f32; color: #0d1117; }
-    .rank-poster { width: 48px; height: 72px; border-radius: 4px; object-fit: cover; background: #21262d; flex-shrink: 0; }
+    .rank-item:hover { background: rgba(88, 166, 255, 0.03); border-radius: 6px; padding-left: 8px; padding-right: 8px; }
+    .rank-num {
+      width: 32px; height: 32px; border-radius: 8px; display: flex;
+      align-items: center; justify-content: center; font-size: 0.85rem;
+      font-weight: 800; color: var(--muted); background: rgba(48, 54, 61, 0.5);
+      flex-shrink: 0;
+    }
+    .rank-item:nth-child(1) .rank-num { background: linear-gradient(135deg, #f0c040, #e2a800); color: #0a0e14; }
+    .rank-item:nth-child(2) .rank-num { background: linear-gradient(135deg, #b0b0b0, #909090); color: #0a0e14; }
+    .rank-item:nth-child(3) .rank-num { background: linear-gradient(135deg, #cd7f32, #a8621e); color: #0a0e14; }
+    .rank-poster {
+      width: 52px; height: 78px; border-radius: 6px; object-fit: cover;
+      background: rgba(48, 54, 61, 0.5); flex-shrink: 0;
+      border: 1px solid rgba(48, 54, 61, 0.4);
+    }
+    .rank-poster-placeholder {
+      width: 52px; height: 78px; border-radius: 6px; flex-shrink: 0;
+      background: rgba(48, 54, 61, 0.3); display: flex;
+      align-items: center; justify-content: center; font-size: 1.2rem;
+      border: 1px solid rgba(48, 54, 61, 0.4);
+    }
     .rank-info { flex: 1; min-width: 0; }
-    .rank-info .title { font-size: 0.95rem; color: #e6edf3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .rank-info .meta { font-size: 0.8rem; color: #8b949e; margin-top: 2px; }
+    .rank-info .title { font-size: 0.95rem; font-weight: 600; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-info .meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
     .rank-info .genres { margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; }
-    .rank-info .genre-tag { font-size: 0.7rem; padding: 1px 8px; background: #1f6feb22; color: #58a6ff; border-radius: 10px; border: 1px solid #1f6feb44; }
+    .genre-tag {
+      font-size: 0.68rem; padding: 2px 8px; background: rgba(88, 166, 255, 0.1);
+      color: var(--primary); border-radius: 10px; border: 1px solid rgba(88, 166, 255, 0.2);
+    }
     .rank-stats { text-align: right; flex-shrink: 0; }
-    .rank-stats .count { font-size: 1.1rem; font-weight: 700; color: #58a6ff; }
-    .rank-stats .duration { font-size: 0.75rem; color: #8b949e; }
-    .loading { text-align: center; padding: 40px; color: #8b949e; }
-    /* 媒体库网格 */
-    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
-    .media-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
-    .media-card:hover { border-color: #58a6ff; }
-    .media-card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; background: #21262d; }
-    .media-card .card-body { padding: 10px 12px; }
-    .media-card .card-title { font-size: 0.85rem; color: #e6edf3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .media-card .card-year { font-size: 0.75rem; color: #8b949e; }
-    .media-card .card-rating { font-size: 0.75rem; color: #3fb950; margin-top: 2px; }
-    footer { text-align: center; margin-top: 48px; padding: 20px; color: #484f58; font-size: 0.85rem; }
-    footer a { color: #58a6ff; text-decoration: none; }
+    .rank-stats .count { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+    .rank-stats .duration { font-size: 0.75rem; color: var(--muted); }
+
+    /* ── 媒体库 ── */
+    .toolbar {
+      display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+    }
+    .search-box {
+      flex: 1; min-width: 200px; padding: 9px 14px;
+      background: rgba(13, 17, 23, 0.6); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 0.9rem;
+      outline: none; transition: border-color var(--transition);
+    }
+    .search-box::placeholder { color: var(--muted); }
+    .search-box:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .filter-group { display: flex; gap: 4px; }
+    .filter-btn {
+      padding: 8px 14px; border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 0.82rem; border-radius: var(--radius-sm); cursor: pointer;
+      transition: all var(--transition); font-weight: 500;
+    }
+    .filter-btn:hover { color: var(--text-bright); border-color: rgba(88, 166, 255, 0.4); }
+    .filter-btn.active { background: rgba(88, 166, 255, 0.12); color: var(--primary); border-color: var(--primary); }
+    .sort-select {
+      padding: 8px 12px; background: rgba(13, 17, 23, 0.6); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 0.82rem; outline: none; cursor: pointer;
+    }
+    .media-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px;
+    }
+    .media-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; cursor: pointer;
+      transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+    .media-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 32px var(--primary-glow);
+    }
+    .media-card .poster-wrap {
+      aspect-ratio: 2/3; background: rgba(48, 54, 61, 0.3);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .media-card .poster-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .media-card:hover .poster-wrap img { transform: scale(1.06); }
+    .media-card .poster-placeholder { font-size: 2.5rem; opacity: 0.5; }
+    .media-card .card-body { padding: 12px 14px; }
+    .media-card .card-title { font-size: 0.85rem; font-weight: 600; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .media-card .card-meta { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+    .media-card .card-rating { font-size: 0.75rem; margin-top: 3px; }
+    .media-card .card-rating .star { color: var(--accent); }
+
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; }
+
+    /* ── 弹窗 ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
+      z-index: 200; display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 32px; max-width: 560px; width: 90%;
+      max-height: 85vh; overflow-y: auto; position: relative;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      transform: translateY(20px); transition: transform 0.3s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 1.1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition);
+    }
+    .modal-close:hover { color: var(--text-bright); border-color: var(--primary); }
+    .modal h3 { font-size: 1.3rem; color: var(--text-bright); margin-bottom: 6px; }
+    .modal .modal-year { font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; }
+    .modal .modal-overview { font-size: 0.9rem; color: var(--text); line-height: 1.7; margin-bottom: 16px; }
+    .modal .modal-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .modal .modal-meta span {
+      font-size: 0.78rem; padding: 4px 10px; background: rgba(88, 166, 255, 0.08);
+      border-radius: 6px; color: var(--primary); border: 1px solid rgba(88, 166, 255, 0.15);
+    }
+    .modal .modal-genres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+
+    /* ── 图表区 ── */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    .chart-card h3 { font-size: 1rem; color: var(--text-bright); margin-bottom: 16px; }
+    .chart-card canvas { max-height: 300px; }
+
+    /* ── 动画 ── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in { animation: fadeInUp 0.5s ease both; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; margin-top: 48px; padding: 32px 20px;
+      color: rgba(72, 79, 88, 0.6); font-size: 0.82rem;
+    }
+    footer a { color: var(--primary); text-decoration: none; }
+
+    /* ── 响应式 ── */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 1.6rem; }
+      .hero { padding: 40px 0 28px; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .stat-card { padding: 16px 14px; }
+      .stat-card .stat-value { font-size: 1.5rem; }
+      .tab-btn { font-size: 0.8rem; padding: 8px 10px; }
+      .media-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+      .toolbar { flex-direction: column; }
+      .search-box { width: 100%; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .rank-poster, .rank-poster-placeholder { width: 40px; height: 60px; }
+      .modal { padding: 24px; }
+    }
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .media-grid { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>traktDaily</h1>
-      <p>观影数据自动同步 · 每 2 小时更新</p>
+    <!-- ── Hero ── -->
+    <header class="hero animate-in">
+      <div class="hero-icon">🎬</div>
+      <h1>trakt<span>Daily</span></h1>
+      <p class="subtitle">观影数据自动同步 · 每 2 小时更新</p>
     </header>
 
-    <div id="loading" class="loading">正在加载数据...</div>
-
-    <!-- 数据概览 -->
-    <div class="stats" id="stats-cards" style="display:none;"></div>
-
-    <!-- 月度趋势 -->
-    <div class="card" id="trend-chart-card" style="display:none;">
-      <h2>月度观影趋势</h2>
-      <canvas id="trend-chart" height="300"></canvas>
+    <!-- ── 统计卡片 ── -->
+    <div class="stats-row animate-in" id="stats-cards">
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" id="stat-total">--</div><div class="stat-label">总观影记录</div></div>
+      <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" id="stat-hours">--</div><div class="stat-label">总时长（小时）</div></div>
+      <div class="stat-card"><div class="stat-icon">🎥</div><div class="stat-value" id="stat-movies">--</div><div class="stat-label">电影</div></div>
+      <div class="stat-card"><div class="stat-icon">📺</div><div class="stat-value" id="stat-episodes">--</div><div class="stat-label">剧集</div></div>
     </div>
 
-    <!-- Top 10 排行榜 -->
-    <div class="card" id="top-chart-card" style="display:none;">
-      <h2>观影排行榜 Top 10</h2>
-      <ul class="rank-list" id="rank-list"></ul>
+    <!-- ── Tab 导航 ── -->
+    <nav class="tab-nav animate-in">
+      <button class="tab-btn active" data-tab="overview">📈 概览</button>
+      <button class="tab-btn" data-tab="rankings">🏆 排行榜</button>
+      <button class="tab-btn" data-tab="library">🎬 媒体库</button>
+      <button class="tab-btn" data-tab="charts">📊 图表</button>
+    </nav>
+
+    <!-- ── Tab: 概览 ── -->
+    <div class="tab-panel active" id="panel-overview">
+      <div class="card animate-in">
+        <h2><span class="icon">📈</span> 月度观影趋势</h2>
+        <canvas id="trend-chart" height="320"></canvas>
+      </div>
     </div>
 
-    <!-- 媒体库 -->
-    <div class="card" id="media-grid-card" style="display:none;">
-      <h2>媒体库</h2>
-      <div class="media-grid" id="media-grid"></div>
+    <!-- ── Tab: 排行榜 ── -->
+    <div class="tab-panel" id="panel-rankings">
+      <div class="card animate-in">
+        <h2><span class="icon">🏆</span> 观影排行榜</h2>
+        <ul class="rank-list" id="rank-list"></ul>
+        <div style="text-align:center;margin-top:16px;" id="rank-more-wrap">
+          <button class="filter-btn" id="rank-show-more" style="display:none;">展开更多 ▾</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab: 媒体库 ── -->
+    <div class="tab-panel" id="panel-library">
+      <div class="card animate-in">
+        <h2><span class="icon">🎬</span> 媒体库</h2>
+        <div class="toolbar">
+          <input type="text" class="search-box" id="media-search" placeholder="搜索标题、年份...">
+          <div class="filter-group" id="media-type-filter">
+            <button class="filter-btn active" data-type="all">全部</button>
+            <button class="filter-btn" data-type="movie">🎥 电影</button>
+            <button class="filter-btn" data-type="show">📺 剧集</button>
+          </div>
+          <select class="sort-select" id="media-sort">
+            <option value="title">按名称</option>
+            <option value="year">按年份</option>
+            <option value="rating">按评分</option>
+            <option value="watch_count">按观看次数</option>
+          </select>
+        </div>
+        <div class="media-grid" id="media-grid"></div>
+        <div class="empty-state" id="media-empty" style="display:none;">
+          <div class="icon">🔍</div>
+          <p>没有找到匹配的媒体</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab: 图表 ── -->
+    <div class="tab-panel" id="panel-charts">
+      <div class="charts-grid animate-in">
+        <div class="chart-card">
+          <h3>媒体类型分布</h3>
+          <canvas id="type-pie-chart" height="260"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>评分分布</h3>
+          <canvas id="rating-chart" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 媒体详情弹窗 ── -->
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal" id="modal">
+        <button class="modal-close" id="modal-close">✕</button>
+        <h3 id="modal-title"></h3>
+        <div class="modal-year" id="modal-year"></div>
+        <div class="modal-genres" id="modal-genres"></div>
+        <div class="modal-meta" id="modal-meta"></div>
+        <div class="modal-overview" id="modal-overview"></div>
+      </div>
     </div>
 
     <footer>
@@ -86,135 +399,408 @@
   </div>
 
   <script>
+    // ── 全局状态 ──
+    let appData = null;
+    let mediaList = [];
+    let mediaWithWatchCount = [];
+    let charts = {};
+
+    // ── 数据加载 ──
     async function loadData() {
       try {
         const [summaryResp, mediaResp] = await Promise.all([
           fetch('data/summary.json'),
           fetch('data/media.json').catch(() => null)
         ]);
-        const data = await summaryResp.json();
-        const mediaList = mediaResp ? await mediaResp.json() : [];
+        appData = await summaryResp.json();
+        mediaList = mediaResp ? await mediaResp.json() : [];
 
-        document.getElementById('loading').style.display = 'none';
-
-        // 统计卡片
-        renderStats(data);
-        // 月度趋势图
-        if (data.monthly_stats && data.monthly_stats.length > 0) {
-          renderTrendChart(data.monthly_stats);
-        }
-        // 排行榜
-        if (data.top_media && data.top_media.length > 0) {
-          renderTopList(data.top_media);
-        }
-        // 媒体库
-        if (mediaList.length > 0) {
-          renderMediaGrid(mediaList);
-        }
+        buildWatchCountMap();
+        renderAll();
       } catch (err) {
-        document.getElementById('loading').textContent = '数据加载失败，请确保已运行过数据抓取。';
+        document.getElementById('stats-cards').innerHTML =
+          '<div class="empty-state" style="grid-column:1/-1"><div class="icon">⚠️</div><p>数据加载失败</p></div>';
         console.error(err);
       }
     }
 
-    function renderStats(data) {
-      const container = document.getElementById('stats-cards');
-      container.style.display = '';
-      const cards = [
-        { value: (data.total_plays || 0).toLocaleString(), label: '总观影记录' },
-        { value: (data.total_minutes || 0).toLocaleString(), label: '总时长（分钟）' },
-        { value: (data.total_movies || 0).toLocaleString(), label: '电影' },
-        { value: (data.total_episodes || 0).toLocaleString(), label: '剧集' },
-      ];
-      container.innerHTML = cards.map(c =>
-        `<div class="stat"><div class="value">${c.value}</div><div class="label">${c.label}</div></div>`
-      ).join('');
+    function buildWatchCountMap() {
+      const countMap = {};
+      if (appData && appData.top_media) {
+        appData.top_media.forEach(m => { countMap[m.trakt_id] = m.watch_count; });
+      }
+      mediaWithWatchCount = mediaList.map(m => ({
+        ...m,
+        watch_count: countMap[m.trakt_id] || 0
+      }));
     }
 
-    function renderTrendChart(monthlyStats) {
-      document.getElementById('trend-chart-card').style.display = '';
-      const stats = [...monthlyStats].reverse(); // 时间升序
+    function renderAll() {
+      renderStats();
+      renderTrendChart();
+      renderRankings();
+      renderLibrary();
+      renderCharts();
+    }
+
+    // ── 统计数字跳动动画 ──
+    function animateValue(el, start, end, duration) {
+      if (start === end) { el.textContent = end.toLocaleString(); return; }
+      const range = end - start;
+      const increment = range > 100 ? Math.ceil(range / 60) : 1;
+      let current = start;
+      const stepTime = Math.max(Math.floor(duration / (range / increment)), 16);
+      const timer = setInterval(() => {
+        current += increment;
+        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+          el.textContent = end.toLocaleString();
+          clearInterval(timer);
+        } else {
+          el.textContent = current.toLocaleString();
+        }
+      }, stepTime);
+    }
+
+    function renderStats() {
+      const total = appData.total_plays || 0;
+      const hours = Math.floor((appData.total_minutes || 0) / 60);
+      const movies = appData.total_movies || 0;
+      const episodes = appData.total_episodes || 0;
+
+      animateValue(document.getElementById('stat-total'), 0, total, 1000);
+      animateValue(document.getElementById('stat-hours'), 0, hours, 1000);
+      animateValue(document.getElementById('stat-movies'), 0, movies, 800);
+      animateValue(document.getElementById('stat-episodes'), 0, episodes, 800);
+    }
+
+    // ── 月度趋势图 ──
+    function renderTrendChart() {
+      const stats = appData.monthly_stats || [];
+      if (!stats.length) return;
+      const sorted = [...stats].reverse(); // 时间升序
       const ctx = document.getElementById('trend-chart').getContext('2d');
-      new Chart(ctx, {
+      if (charts.trend) charts.trend.destroy();
+      charts.trend = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: stats.map(s => s.year_month),
+          labels: sorted.map(s => s.year_month),
           datasets: [
             {
               label: '观影次数',
-              data: stats.map(s => s.total_count),
+              data: sorted.map(s => s.total_count),
               borderColor: '#58a6ff',
-              backgroundColor: 'rgba(88,166,255,0.1)',
-              fill: true, tension: 0.3, yAxisID: 'y',
+              backgroundColor: 'rgba(88,166,255,0.08)',
+              fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 6,
+              pointBackgroundColor: '#58a6ff', borderWidth: 2, yAxisID: 'y',
             },
             {
-              label: '时长（分钟）',
-              data: stats.map(s => s.total_minutes),
+              label: '电影',
+              data: sorted.map(s => s.movie_count),
               borderColor: '#3fb950',
-              backgroundColor: 'rgba(63,185,80,0.1)',
-              fill: true, tension: 0.3, yAxisID: 'y1',
+              borderDash: [5, 3], tension: 0.4, pointRadius: 2,
+              borderWidth: 1.5, yAxisID: 'y',
+            },
+            {
+              label: '剧集',
+              data: sorted.map(s => s.episode_count),
+              borderColor: '#8b5cf6',
+              borderDash: [5, 3], tension: 0.4, pointRadius: 2,
+              borderWidth: 1.5, yAxisID: 'y',
             }
           ]
         },
         options: {
-          responsive: true,
-          plugins: { legend: { labels: { color: '#8b949e' } } },
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { labels: { color: '#8b949e', usePointStyle: true, padding: 20 } }
+          },
           scales: {
-            x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-            y: { type: 'linear', position: 'left', title: { display: true, text: '次数', color: '#8b949e' }, ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-            y1: { type: 'linear', position: 'right', title: { display: true, text: '分钟', color: '#8b949e' }, ticks: { color: '#8b949e' }, grid: { display: false } }
+            x: { ticks: { color: '#8b949e', maxTicksLimit: 12 }, grid: { color: 'rgba(48,54,61,0.3)' } },
+            y: { type: 'linear', position: 'left', title: { display: true, text: '次数', color: '#8b949e' }, ticks: { color: '#8b949e' }, grid: { color: 'rgba(48,54,61,0.3)' } }
           }
         }
       });
     }
 
-    function renderTopList(topMedia) {
-      document.getElementById('top-chart-card').style.display = '';
+    // ── 排行榜 ──
+    function renderRankings() {
+      const topMedia = appData.top_media || [];
       const list = document.getElementById('rank-list');
-      list.innerHTML = topMedia.map((m, i) => {
-        const genres = m.genres ? JSON.parse(m.genres) : [];
-        const hours = Math.floor((m.total_minutes || 0) / 60);
-        return `
-          <li class="rank-item">
-            <span class="rank-num">${i + 1}</span>
-            ${m.poster_url ? `<img class="rank-poster" src="${m.poster_url}" alt="${m.title}" loading="lazy">` : '<div class="rank-poster"></div>'}
-            <div class="rank-info">
-              <div class="title">${escHtml(m.title)}</div>
-              <div class="meta">${m.media_type === 'movie' ? '电影' : '剧集'} ${m.rating ? '· ⭐' + m.rating : ''}</div>
-              <div class="genres">${genres.slice(0, 3).map(g => `<span class="genre-tag">${escHtml(g)}</span>`).join('')}</div>
-            </div>
-            <div class="rank-stats">
-              <div class="count">${m.watch_count}次</div>
-              <div class="duration">${hours}h</div>
-            </div>
-          </li>
-        `;
-      }).join('');
+      const showMoreBtn = document.getElementById('rank-show-more');
+      const SHOW_INITIAL = 10;
+      let expanded = false;
+
+      function render(items) {
+        list.innerHTML = items.map((m, i) => {
+          const genres = safeParseJSON(m.genres, []);
+          return `
+            <li class="rank-item">
+              <span class="rank-num">${i + 1}</span>
+              ${m.poster_url
+                ? `<img class="rank-poster" src="${m.poster_url}" alt="${escHtml(m.title)}" loading="lazy">`
+                : `<div class="rank-poster-placeholder">${m.media_type === 'movie' ? '🎬' : '📺'}</div>`}
+              <div class="rank-info">
+                <div class="title">${escHtml(m.title)}</div>
+                <div class="meta">${m.media_type === 'movie' ? '电影' : '剧集'} ${m.rating ? '· ⭐' + Number(m.rating).toFixed(1) : ''}</div>
+                <div class="genres">${genres.slice(0, 3).map(g => `<span class="genre-tag">${escHtml(g)}</span>`).join('')}</div>
+              </div>
+              <div class="rank-stats">
+                <div class="count">${m.watch_count}次</div>
+              </div>
+            </li>
+          `;
+        }).join('');
+      }
+
+      if (topMedia.length <= SHOW_INITIAL) {
+        render(topMedia);
+        showMoreBtn.style.display = 'none';
+      } else {
+        render(topMedia.slice(0, SHOW_INITIAL));
+        showMoreBtn.style.display = '';
+        showMoreBtn.textContent = `展开更多 (${topMedia.length - SHOW_INITIAL} 项) ▾`;
+        showMoreBtn.onclick = () => {
+          expanded = !expanded;
+          if (expanded) {
+            render(topMedia);
+            showMoreBtn.textContent = '收起 ▴';
+          } else {
+            render(topMedia.slice(0, SHOW_INITIAL));
+            showMoreBtn.textContent = `展开更多 (${topMedia.length - SHOW_INITIAL} 项) ▾`;
+          }
+        };
+      }
     }
 
-    function renderMediaGrid(mediaList) {
-      document.getElementById('media-grid-card').style.display = '';
+    // ── 媒体库 ──
+    let libFilter = 'all';
+    let libSort = 'title';
+    let libSearch = '';
+
+    function renderLibrary() {
       const grid = document.getElementById('media-grid');
-      grid.innerHTML = mediaList.filter(m => m.poster_url).slice(0, 24).map(m => {
+      const empty = document.getElementById('media-empty');
+
+      let filtered = mediaWithWatchCount.filter(m => {
+        if (libFilter === 'movie') return m.media_type === 'movie';
+        if (libFilter === 'show') return m.media_type === 'show';
+        return true;
+      });
+
+      if (libSearch) {
+        const q = libSearch.toLowerCase();
+        filtered = filtered.filter(m =>
+          (m.title || '').toLowerCase().includes(q) ||
+          String(m.year || '').includes(q)
+        );
+      }
+
+      filtered.sort((a, b) => {
+        switch (libSort) {
+          case 'year': return (b.year || 0) - (a.year || 0);
+          case 'rating': return (b.rating || 0) - (a.rating || 0);
+          case 'watch_count': return (b.watch_count || 0) - (a.watch_count || 0);
+          default: return (a.title || '').localeCompare(b.title || '');
+        }
+      });
+
+      if (!filtered.length) {
+        grid.innerHTML = '';
+        empty.style.display = '';
+        return;
+      }
+      empty.style.display = 'none';
+
+      grid.innerHTML = filtered.map(m => {
+        const rating = m.rating ? Number(m.rating).toFixed(1) : null;
         return `
-          <div class="media-card">
-            <img src="${m.poster_url}" alt="${m.title}" loading="lazy">
+          <div class="media-card" onclick="openMediaDetail('${escAttr(m.title)}', ${m.trakt_id})" data-trakt-id="${m.trakt_id}">
+            <div class="poster-wrap">
+              ${m.poster_url
+                ? `<img src="${m.poster_url}" alt="${escHtml(m.title)}" loading="lazy">`
+                : `<span class="poster-placeholder">${m.media_type === 'movie' ? '🎬' : '📺'}</span>`}
+            </div>
             <div class="card-body">
               <div class="card-title" title="${escHtml(m.title)}">${escHtml(m.title)}</div>
-              <div class="card-year">${m.year || ''} ${m.certification ? '· ' + m.certification : ''}</div>
-              ${m.rating ? `<div class="card-rating">⭐ ${m.rating}</div>` : ''}
+              <div class="card-meta">${m.year || '--'} · ${m.media_type === 'movie' ? '电影' : '剧集'}</div>
+              ${rating ? `<div class="card-rating"><span class="star">⭐</span> ${rating}</div>` : ''}
             </div>
           </div>
         `;
       }).join('');
     }
 
+    document.getElementById('media-search').addEventListener('input', function () {
+      libSearch = this.value;
+      renderLibrary();
+    });
+
+    document.getElementById('media-type-filter').addEventListener('click', function (e) {
+      if (!e.target.classList.contains('filter-btn')) return;
+      this.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      libFilter = e.target.dataset.type;
+      renderLibrary();
+    });
+
+    document.getElementById('media-sort').addEventListener('change', function () {
+      libSort = this.value;
+      renderLibrary();
+    });
+
+    // ── 媒体详情弹窗 ──
+    function openMediaDetail(title, traktId) {
+      const m = mediaList.find(x => x.trakt_id === traktId);
+      if (!m) return;
+
+      document.getElementById('modal-title').textContent = m.title;
+      document.getElementById('modal-year').textContent =
+        `${m.year || '--'} · ${m.media_type === 'movie' ? '电影' : '剧集'}${m.certification ? ' · ' + m.certification : ''}${m.status ? ' · ' + (m.status === 'ended' ? '已完结' : m.status === 'released' ? '已上映' : m.status) : ''}`;
+
+      const genres = safeParseJSON(m.genres, []);
+      document.getElementById('modal-genres').innerHTML = genres.map(g =>
+        `<span class="genre-tag">${escHtml(g)}</span>`
+      ).join('') || '<span class="genre-tag">暂无</span>';
+
+      const metaItems = [];
+      if (m.rating) metaItems.push(`⭐ ${Number(m.rating).toFixed(1)}`);
+      if (m.votes) metaItems.push(`${m.votes.toLocaleString()} 票`);
+      if (m.runtime) metaItems.push(`${m.runtime} 分钟`);
+      if (m.country) metaItems.push(m.country.toUpperCase());
+      if (m.language) metaItems.push(m.language.toUpperCase());
+      if (m.network) metaItems.push(m.network);
+      const wc = mediaWithWatchCount.find(x => x.trakt_id === traktId);
+      if (wc && wc.watch_count) metaItems.push(`观看 ${wc.watch_count} 次`);
+      document.getElementById('modal-meta').innerHTML = metaItems.map(t =>
+        `<span>${escHtml(t)}</span>`
+      ).join('');
+
+      document.getElementById('modal-overview').textContent = m.overview || '暂无简介';
+
+      document.getElementById('modal-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal-overlay').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ── 图表 ──
+    function renderCharts() {
+      // 媒体类型饼图
+      const movies = appData.total_movies || 0;
+      const episodes = appData.total_episodes || 0;
+      const ctx1 = document.getElementById('type-pie-chart').getContext('2d');
+      if (charts.typePie) charts.typePie.destroy();
+      charts.typePie = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: ['电影', '剧集'],
+          datasets: [{
+            data: [movies, episodes],
+            backgroundColor: ['#58a6ff', '#8b5cf6'],
+            borderColor: 'rgba(10,14,20,0.8)',
+            borderWidth: 3,
+            hoverBorderColor: 'rgba(10,14,20,0.8)',
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#8b949e', padding: 16, usePointStyle: true } }
+          },
+          cutout: '60%',
+        }
+      });
+
+      // 评分分布
+      const ratings = mediaList.map(m => m.rating).filter(r => r != null).map(Number);
+      const buckets = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // 0-1, 1-2, ..., 9-10
+      ratings.forEach(r => {
+        const idx = Math.min(Math.floor(r), 9);
+        buckets[idx]++;
+      });
+      const labels = ['0-1', '1-2', '2-3', '3-4', '4-5', '5-6', '6-7', '7-8', '8-9', '9-10'];
+
+      const ctx2 = document.getElementById('rating-chart').getContext('2d');
+      if (charts.rating) charts.rating.destroy();
+      charts.rating = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: '媒体数量',
+            data: buckets,
+            backgroundColor: 'rgba(240, 192, 64, 0.5)',
+            borderColor: '#f0c040',
+            borderWidth: 1.5,
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { ticks: { color: '#8b949e' }, grid: { display: false } },
+            y: { ticks: { color: '#8b949e', stepSize: 1 }, grid: { color: 'rgba(48,54,61,0.3)' }, title: { display: true, text: '数量', color: '#8b949e' } }
+          }
+        }
+      });
+    }
+
+    // ── Tab 切换 ──
+    function initTabs() {
+      const buttons = document.querySelectorAll('.tab-btn');
+      const panels = document.querySelectorAll('.tab-panel');
+
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          buttons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          panels.forEach(p => p.classList.remove('active'));
+          const panelId = 'panel-' + btn.dataset.tab;
+          document.getElementById(panelId).classList.add('active');
+
+          // 图表需要 resize 因为隐藏时 canvas 尺寸为 0
+          if (btn.dataset.tab === 'charts') {
+            setTimeout(() => {
+              Object.values(charts).forEach(c => c && c.resize && c.resize());
+            }, 100);
+          }
+        });
+      });
+    }
+
+    // ── 工具函数 ──
     function escHtml(s) {
       const div = document.createElement('div');
       div.textContent = s;
       return div.innerHTML;
     }
 
+    function escAttr(s) {
+      return s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function safeParseJSON(str, fallback) {
+      if (!str) return fallback;
+      try { return JSON.parse(str); } catch { return fallback; }
+    }
+
+    // ── 启动 ──
+    initTabs();
     loadData();
   </script>
 </body>
