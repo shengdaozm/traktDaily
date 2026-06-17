@@ -153,6 +153,7 @@ def _extract_play_info(entry: dict) -> dict | None:
             "action": action,
             "watched_at": watched_at,
             "watched_at_local": watched_at_local,
+            "media_trakt_id": ids.get("trakt", 0),
         }
 
     elif entry_type == "episode":
@@ -180,6 +181,7 @@ def _extract_play_info(entry: dict) -> dict | None:
             "action": action,
             "watched_at": watched_at,
             "watched_at_local": watched_at_local,
+            "media_trakt_id": show_ids.get("trakt", 0),
         }
 
     return None

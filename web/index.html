@@ -317,7 +317,7 @@
     <!-- ── Tab 导航 ── -->
     <nav class="tab-nav animate-in">
       <button class="tab-btn active" data-tab="overview">📈 概览</button>
-      <button class="tab-btn" data-tab="rankings">🏆 排行榜</button>
+      <button class="tab-btn" data-tab="heatmap">🔥 热力图</button>
       <button class="tab-btn" data-tab="library">🎬 媒体库</button>
       <button class="tab-btn" data-tab="charts">📊 图表</button>
     </nav>
@@ -330,13 +330,26 @@
       </div>
     </div>
 
-    <!-- ── Tab: 排行榜 ── -->
-    <div class="tab-panel" id="panel-rankings">
+    <!-- ── Tab: 热力图 ── -->
+    <div class="tab-panel" id="panel-heatmap">
       <div class="card animate-in">
-        <h2><span class="icon">🏆</span> 观影排行榜</h2>
-        <ul class="rank-list" id="rank-list"></ul>
-        <div style="text-align:center;margin-top:16px;" id="rank-more-wrap">
-          <button class="filter-btn" id="rank-show-more" style="display:none;">展开更多 ▾</button>
+        <h2><span class="icon">🔥</span> 观影类型分布</h2>
+        <div class="toolbar" style="margin-bottom:16px;">
+          <div class="filter-group" id="heatmap-range-filter">
+            <button class="filter-btn" data-range="month">本月</button>
+            <button class="filter-btn" data-range="year">今年</button>
+            <button class="filter-btn active" data-range="all">全部</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+          <div class="chart-card">
+            <h3>按集数</h3>
+            <canvas id="genre-pie-episodes" height="320"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>按时长（分钟）</h3>
+            <canvas id="genre-pie-minutes" height="320"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -382,8 +395,7 @@
     </div>
 
     <!-- ── 媒体详情弹窗 ── -->
-    <div class="modal-overlay" id="modal-overlay">
-      <div class="modal" id="modal">
+    <div class="modal-overlay" id="modal-overlay">      <div class="modal" id="modal">
         <button class="modal-close" id="modal-close">✕</button>
         <h3 id="modal-title"></h3>
         <div class="modal-year" id="modal-year"></div>
@@ -426,9 +438,6 @@
 
     function buildWatchCountMap() {
       const countMap = {};
-      if (appData && appData.top_media) {
-        appData.top_media.forEach(m => { countMap[m.trakt_id] = m.watch_count; });
-      }
       mediaWithWatchCount = mediaList.map(m => ({
         ...m,
         watch_count: countMap[m.trakt_id] || 0
@@ -438,7 +447,7 @@
     function renderAll() {
       renderStats();
       renderTrendChart();
-      renderRankings();
+      renderHeatmap();
       renderLibrary();
       renderCharts();
     }
@@ -523,55 +532,98 @@
       });
     }
 
-    // ── 排行榜 ──
-    function renderRankings() {
-      const topMedia = appData.top_media || [];
-      const list = document.getElementById('rank-list');
-      const showMoreBtn = document.getElementById('rank-show-more');
-      const SHOW_INITIAL = 10;
-      let expanded = false;
+    // ── 饼状图 ──
+    let heatmapRange = 'all';
 
-      function render(items) {
-        list.innerHTML = items.map((m, i) => {
-          const genres = safeParseJSON(m.genres, []);
-          return `
-            <li class="rank-item">
-              <span class="rank-num">${i + 1}</span>
-              ${m.poster_url
-                ? `<img class="rank-poster" src="${m.poster_url}" alt="${escHtml(m.title)}" loading="lazy">`
-                : `<div class="rank-poster-placeholder">${m.media_type === 'movie' ? '🎬' : '📺'}</div>`}
-              <div class="rank-info">
-                <div class="title">${escHtml(m.title)}</div>
-                <div class="meta">${m.media_type === 'movie' ? '电影' : '剧集'} ${m.rating ? '· ⭐' + Number(m.rating).toFixed(1) : ''}</div>
-                <div class="genres">${genres.slice(0, 3).map(g => `<span class="genre-tag">${escHtml(g)}</span>`).join('')}</div>
-              </div>
-              <div class="rank-stats">
-                <div class="count">${m.watch_count}次</div>
-              </div>
-            </li>
-          `;
-        }).join('');
+    const GENRE_COLORS = [
+      '#58a6ff', '#f0c040', '#3fb950', '#8b5cf6', '#f97583',
+      '#79c0ff', '#d2a8ff', '#56d4dd', '#e3b341', '#db61a2',
+      '#7ee787', '#ffa657', '#a5d6ff', '#ff7b72', '#b392f0',
+      '#85e89d', '#ffdf5d', '#f78166', '#96d0ff', '#d1bc6f',
+      '#c9d1d9'
+    ];
+
+    function renderHeatmap() {
+      const stats = appData.daily_genre_stats || [];
+      if (!stats.length) return;
+
+      const now = new Date();
+      const thisYear = now.getFullYear();
+      const thisMonth = thisYear + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+      let filtered = stats;
+      if (heatmapRange === 'year') {
+        filtered = stats.filter(s => s.date.startsWith(String(thisYear)));
+      } else if (heatmapRange === 'month') {
+        filtered = stats.filter(s => s.date.startsWith(thisMonth));
       }
 
-      if (topMedia.length <= SHOW_INITIAL) {
-        render(topMedia);
-        showMoreBtn.style.display = 'none';
-      } else {
-        render(topMedia.slice(0, SHOW_INITIAL));
-        showMoreBtn.style.display = '';
-        showMoreBtn.textContent = `展开更多 (${topMedia.length - SHOW_INITIAL} 项) ▾`;
-        showMoreBtn.onclick = () => {
-          expanded = !expanded;
-          if (expanded) {
-            render(topMedia);
-            showMoreBtn.textContent = '收起 ▴';
-          } else {
-            render(topMedia.slice(0, SHOW_INITIAL));
-            showMoreBtn.textContent = `展开更多 (${topMedia.length - SHOW_INITIAL} 项) ▾`;
-          }
-        };
-      }
+      const genreCounts = {};
+      const genreMinutes = {};
+      filtered.forEach(s => {
+        genreCounts[s.genre] = (genreCounts[s.genre] || 0) + (s.count || 0);
+        genreMinutes[s.genre] = (genreMinutes[s.genre] || 0) + (s.minutes || 0);
+      });
+
+      const genres = Object.keys(genreCounts).sort((a, b) => genreCounts[b] - genreCounts[a]);
+      const counts = genres.map(g => genreCounts[g]);
+      const minutes = genres.map(g => Math.round(genreMinutes[g]));
+      const colors = genres.map((_, i) => GENRE_COLORS[i % GENRE_COLORS.length]);
+
+      const genreLabels = genres.map(g => g.charAt(0).toUpperCase() + g.slice(1));
+
+      if (charts.genrePieEpisodes) charts.genrePieEpisodes.destroy();
+      charts.genrePieEpisodes = new Chart(
+        document.getElementById('genre-pie-episodes').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: genreLabels,
+          datasets: [{ data: counts, backgroundColor: colors, borderColor: 'rgba(10,14,20,0.8)', borderWidth: 2 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { color: '#8b949e', padding: 10, usePointStyle: true, font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.label}: ${ctx.raw} 集 (${(ctx.raw / counts.reduce((a,b)=>a+b,0) * 100).toFixed(1)}%)`
+              }
+            }
+          },
+          cutout: '55%',
+        }
+      });
+
+      if (charts.genrePieMinutes) charts.genrePieMinutes.destroy();
+      charts.genrePieMinutes = new Chart(
+        document.getElementById('genre-pie-minutes').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: genreLabels,
+          datasets: [{ data: minutes, backgroundColor: colors, borderColor: 'rgba(10,14,20,0.8)', borderWidth: 2 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { color: '#8b949e', padding: 10, usePointStyle: true, font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.label}: ${Math.round(ctx.raw / 60)} 小时 (${(ctx.raw / minutes.reduce((a,b)=>a+b,0) * 100).toFixed(1)}%)`
+              }
+            }
+          },
+          cutout: '55%',
+        }
+      });
     }
+
+    document.getElementById('heatmap-range-filter').addEventListener('click', function(e) {
+      if (!e.target.classList.contains('filter-btn')) return;
+      this.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      heatmapRange = e.target.dataset.range;
+      renderHeatmap();
+    });
 
     // ── 媒体库 ──
     let libFilter = 'all';

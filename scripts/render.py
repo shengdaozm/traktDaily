@@ -10,9 +10,9 @@ from scripts.config import WEB_DATA_DIR
 from scripts.db import (
     get_plays_count,
     get_monthly_stats,
-    get_top_media,
     get_genre_stats,
     get_all_media,
+    get_daily_genre_stats,
     ensure_dirs,
 )
 
@@ -33,8 +33,8 @@ def run():
         "total_movies": total_movies,
         "total_episodes": total_episodes,
         "monthly_stats": monthly_stats,
-        "top_media": get_top_media(10),
         "genre_stats": get_genre_stats(),
+        "daily_genre_stats": get_daily_genre_stats(),
     }
 
     with open(f"{WEB_DATA_DIR}/summary.json", "w", encoding="utf-8") as f:

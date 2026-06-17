@@ -6,6 +6,7 @@ plays 表存储每次观影事件 + 核心元数据，media 表存储完整的�
 """
 
 import sqlite3
+import json
 import os
 from scripts.config import DB_PATH, REPORTS_DIR, WEB_DATA_DIR
 
@@ -59,6 +60,7 @@ def init_db():
             action      TEXT,
             watched_at  TEXT    NOT NULL,
             watched_at_local TEXT,
+            media_trakt_id INTEGER,
             created_at  TEXT    DEFAULT (datetime('now')),
             UNIQUE(trakt_id, watched_at)
         )
@@ -119,6 +121,7 @@ def init_db():
     _add_column_if_missing(conn, "plays", "number", "INTEGER")
     _add_column_if_missing(conn, "plays", "action", "TEXT")
     _add_column_if_missing(conn, "plays", "watched_at_local", "TEXT")
+    _add_column_if_missing(conn, "plays", "media_trakt_id", "INTEGER")
 
     conn.commit()
     conn.close()
@@ -139,10 +142,10 @@ def insert_play(play: dict) -> bool:
         conn.execute("""
             INSERT INTO plays (trakt_id, tmdb_id, imdb_id, title, year, media_type,
                                season, number, runtime, genres, overview, rating, votes,
-                               action, watched_at, watched_at_local)
+                               action, watched_at, watched_at_local, media_trakt_id)
             VALUES (:trakt_id, :tmdb_id, :imdb_id, :title, :year, :media_type,
                     :season, :number, :runtime, :genres, :overview, :rating, :votes,
-                    :action, :watched_at, :watched_at_local)
+                    :action, :watched_at, :watched_at_local, :media_trakt_id)
         """, play)
         conn.commit()
         return True
@@ -258,13 +261,20 @@ def get_top_media(limit: int = 10) -> list[dict]:
     """获取观影次数最多的 Top N 媒体（用于排行榜），关联 media 表获取海报。"""
     conn = get_conn()
     rows = conn.execute("""
-        SELECT p.trakt_id, p.title, p.media_type, p.genres,
-               COUNT(*) AS watch_count,
-               SUM(p.runtime) AS total_minutes,
-               m.poster_url, m.rating, m.overview
+        SELECT
+            p.media_trakt_id AS trakt_id,
+            CASE WHEN p.media_type = 'episode'
+                 THEN SUBSTR(p.title, 1, INSTR(p.title, ' S') - 1)
+                 ELSE p.title
+            END AS title,
+            p.media_type,
+            p.genres,
+            COUNT(*) AS watch_count,
+            SUM(p.runtime) AS total_minutes,
+            m.poster_url, m.rating, m.overview
         FROM plays p
-        LEFT JOIN media m ON p.trakt_id = m.trakt_id
-        GROUP BY p.trakt_id
+        LEFT JOIN media m ON m.trakt_id = p.media_trakt_id
+        GROUP BY p.media_trakt_id
         ORDER BY watch_count DESC
         LIMIT ?
     """, (limit,)).fetchall()
@@ -279,11 +289,21 @@ def get_genre_stats() -> list[dict]:
         SELECT genres, COUNT(*) AS cnt, SUM(runtime) AS total_minutes
         FROM plays
         WHERE genres IS NOT NULL AND genres != ''
-        GROUP BY genres
-        ORDER BY cnt DESC
+        GROUP BY media_trakt_id, genres
     """).fetchall()
+    result = {}
+    for r in rows:
+        try:
+            genre_list = json.loads(r["genres"])
+        except (json.JSONDecodeError, TypeError):
+            genre_list = []
+        for g in genre_list:
+            if g not in result:
+                result[g] = {"genre": g, "cnt": 0, "total_minutes": 0}
+            result[g]["cnt"] += 1
+            result[g]["total_minutes"] += r["total_minutes"] or 0
     conn.close()
-    return [dict(r) for r in rows]
+    return sorted(result.values(), key=lambda x: x["cnt"], reverse=True)
 
 
 def get_all_media(limit: int = 500) -> list[dict]:
@@ -294,6 +314,37 @@ def get_all_media(limit: int = 500) -> list[dict]:
     """, (limit,)).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def get_daily_genre_stats() -> list[dict]:
+    """按日期+类型统计每日观看集数和时长，用于前端图表。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT
+            DATE(watched_at_local) AS date,
+            genres,
+            runtime
+        FROM plays
+        WHERE genres IS NOT NULL AND genres != '' AND watched_at_local IS NOT NULL
+    """).fetchall()
+    conn.close()
+
+    result = {}
+    for r in rows:
+        try:
+            genre_list = json.loads(r["genres"])
+        except (json.JSONDecodeError, TypeError):
+            continue
+        date = r["date"]
+        runtime_per = (r["runtime"] or 0) / max(len(genre_list), 1)
+        for g in genre_list:
+            key = (date, g)
+            if key not in result:
+                result[key] = {"date": date, "genre": g, "count": 0, "minutes": 0}
+            result[key]["count"] += 1
+            result[key]["minutes"] += runtime_per
+
+    return list(result.values())
 
 
 def ensure_dirs():
