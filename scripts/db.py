@@ -49,12 +49,16 @@ def init_db():
             title       TEXT    NOT NULL,
             year        INTEGER,
             media_type  TEXT    NOT NULL,
+            season      INTEGER,
+            number      INTEGER,
             runtime     INTEGER,
             genres      TEXT,
             overview    TEXT,
             rating      REAL,
             votes       INTEGER,
+            action      TEXT,
             watched_at  TEXT    NOT NULL,
+            watched_at_local TEXT,
             created_at  TEXT    DEFAULT (datetime('now')),
             UNIQUE(trakt_id, watched_at)
         )
@@ -111,6 +115,11 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_plays_trakt_id ON plays(trakt_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_plays_tmdb_id ON plays(tmdb_id)")
 
+    _add_column_if_missing(conn, "plays", "season", "INTEGER")
+    _add_column_if_missing(conn, "plays", "number", "INTEGER")
+    _add_column_if_missing(conn, "plays", "action", "TEXT")
+    _add_column_if_missing(conn, "plays", "watched_at_local", "TEXT")
+
     conn.commit()
     conn.close()
 
@@ -120,7 +129,8 @@ def insert_play(play: dict) -> bool:
     插入一条观影记录，自动去重。
     参数:
         play: 包含 trakt_id, tmdb_id, imdb_id, title, year, media_type,
-              runtime, genres, overview, rating, votes, watched_at 的字典
+              season, number, runtime, genres, overview, rating, votes,
+              action, watched_at 的字典
     返回:
         True 表示新增成功，False 表示已存在（重复）
     """
@@ -128,9 +138,11 @@ def insert_play(play: dict) -> bool:
     try:
         conn.execute("""
             INSERT INTO plays (trakt_id, tmdb_id, imdb_id, title, year, media_type,
-                               runtime, genres, overview, rating, votes, watched_at)
+                               season, number, runtime, genres, overview, rating, votes,
+                               action, watched_at, watched_at_local)
             VALUES (:trakt_id, :tmdb_id, :imdb_id, :title, :year, :media_type,
-                    :runtime, :genres, :overview, :rating, :votes, :watched_at)
+                    :season, :number, :runtime, :genres, :overview, :rating, :votes,
+                    :action, :watched_at, :watched_at_local)
         """, play)
         conn.commit()
         return True
@@ -221,13 +233,13 @@ def refresh_monthly_stats():
     conn.execute("""
         INSERT INTO monthly_stats (year_month, total_count, total_minutes, movie_count, episode_count)
         SELECT
-            substr(watched_at, 1, 7) AS year_month,
+            substr(watched_at_local, 1, 7) AS year_month,
             COUNT(*)                  AS total_count,
             COALESCE(SUM(runtime), 0) AS total_minutes,
             COALESCE(SUM(CASE WHEN media_type = 'movie' THEN 1 ELSE 0 END), 0) AS movie_count,
             COALESCE(SUM(CASE WHEN media_type = 'episode' THEN 1 ELSE 0 END), 0) AS episode_count
         FROM plays
-        GROUP BY substr(watched_at, 1, 7)
+        GROUP BY substr(watched_at_local, 1, 7)
         ORDER BY year_month
     """)
     conn.commit()

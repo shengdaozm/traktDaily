@@ -14,6 +14,7 @@ Trakt 数据抓取主入口
 
 import json
 import sys
+from datetime import datetime, timezone, timedelta
 import requests
 from pyrate_limiter import Duration, Limiter, Rate
 from requests_ratelimiter import LimiterAdapter
@@ -44,6 +45,18 @@ _session = requests.Session()
 _session.mount("https://", _trakt_adapter)
 _session.mount("http://", _trakt_adapter)
 
+LOCAL_TZ = timezone(timedelta(hours=8))
+
+
+def _utc_to_local(utc_str: str) -> str:
+    """将 UTC ISO 8601 时间字符串转为本地时区 (UTC+8) 字符串。"""
+    try:
+        dt = datetime.fromisoformat(utc_str.replace("Z", "+00:00"))
+        local_dt = dt.astimezone(LOCAL_TZ)
+        return local_dt.strftime("%Y-%m-%dT%H:%M:%S")
+    except Exception:
+        return utc_str
+
 
 def _trakt_request(endpoint: str, params: dict | None = None) -> dict:
     """
@@ -69,10 +82,12 @@ def _trakt_request(endpoint: str, params: dict | None = None) -> dict:
     return resp.json()
 
 
-def fetch_history() -> list[dict]:
+def fetch_history(since: str | None = None) -> list[dict]:
     """
-    分页拉取 Trakt 全部观影历史。
+    分页拉取 Trakt 观影历史，支持增量查询。
     Trakt 按 watched_at 倒序返回，最新数据在第一页。
+    参数:
+        since: 增量起始时间（ISO 8601），仅拉取该时间之后的记录；None 则拉取全部
     返回:
         所有历史记录的列表，每条包含完整的 movie/show/episode 元数据
     """
@@ -83,7 +98,10 @@ def fetch_history() -> list[dict]:
         params = {
             "page": page,
             "limit": TRAKT_PAGE_LIMIT,
+            "extended": "full",
         }
+        if since:
+            params["start_at"] = since
 
         data = _trakt_request(f"/users/{TRAKT_USERNAME}/history", params)
 
@@ -103,15 +121,16 @@ def fetch_history() -> list[dict]:
 
 def _extract_play_info(entry: dict) -> dict | None:
     """
-    从 Trakt history 条目中提取完整的观影记录字段。
-    从 Trakt API 返回的 movie/show/episode 中提取所有可用元数据。
+    从 Trakt history 条目中提取完整的观影记录字段（需要 extended=full）。
     参数:
         entry: 单条 Trakt history 条目
     返回:
         包含所有 plays 表字段的字典，或 None（解析失败）
     """
     watched_at = entry.get("watched_at", "")
+    watched_at_local = _utc_to_local(watched_at)
     entry_type = entry.get("type", "")
+    action = entry.get("action", "")
 
     if entry_type == "movie":
         m = entry.get("movie", {})
@@ -124,12 +143,16 @@ def _extract_play_info(entry: dict) -> dict | None:
             "title": m.get("title", "Unknown"),
             "year": m.get("year"),
             "media_type": "movie",
+            "season": None,
+            "number": None,
             "runtime": m.get("runtime"),
             "genres": json.dumps(genres, ensure_ascii=False) if genres else None,
             "overview": m.get("overview"),
             "rating": m.get("rating"),
             "votes": m.get("votes"),
+            "action": action,
             "watched_at": watched_at,
+            "watched_at_local": watched_at_local,
         }
 
     elif entry_type == "episode":
@@ -147,12 +170,16 @@ def _extract_play_info(entry: dict) -> dict | None:
             "title": f"{show.get('title', 'Unknown')} S{season:02d}E{number:02d}",
             "year": show.get("year"),
             "media_type": "episode",
-            "runtime": episode.get("runtime"),
+            "season": season,
+            "number": number,
+            "runtime": episode.get("runtime") or show.get("runtime"),
             "genres": json.dumps(genres, ensure_ascii=False) if genres else None,
             "overview": episode.get("overview") or show.get("overview"),
             "rating": episode.get("rating") or show.get("rating"),
             "votes": episode.get("votes") or show.get("votes"),
+            "action": action,
             "watched_at": watched_at,
+            "watched_at_local": watched_at_local,
         }
 
     return None
@@ -160,8 +187,7 @@ def _extract_play_info(entry: dict) -> dict | None:
 
 def _extract_media_info(entry: dict) -> dict | None:
     """
-    从 Trakt history 条目中提取完整的媒体元数据（media 表）。
-    从 Trakt API 返回的数据中提取所有可用的详情字段。
+    从 Trakt history 条目中提取完整的媒体元数据（media 表，需要 extended=full）。
     参数:
         entry: 单条 Trakt history 条目
     返回:
@@ -196,7 +222,6 @@ def _extract_media_info(entry: dict) -> dict | None:
             "homepage": m.get("homepage"),
             "first_aired": m.get("released"),
             "comment_count": m.get("comment_count"),
-            # poster_url 和 backdrop_url 由 TMDB 补充
             "poster_url": None,
             "backdrop_url": None,
         }
@@ -206,7 +231,6 @@ def _extract_media_info(entry: dict) -> dict | None:
         episode = entry.get("episode", {})
         show_ids = show.get("ids", {})
         genre_list = show.get("genres", [])
-        # 剧集以 show 的 trakt_id 为主键，多个 episode 共享同一个 show 的元数据
         return {
             "trakt_id": show_ids.get("trakt", 0),
             "tmdb_id": show_ids.get("tmdb"),
@@ -215,10 +239,10 @@ def _extract_media_info(entry: dict) -> dict | None:
             "year": show.get("year"),
             "media_type": "show",
             "slug": show_ids.get("slug"),
-            "tagline": None,
+            "tagline": show.get("tagline"),
             "overview": show.get("overview"),
             "genres": json.dumps(genre_list, ensure_ascii=False) if genre_list else None,
-            "runtime": show.get("runtime") or episode.get("runtime"),
+            "runtime": episode.get("runtime") or show.get("runtime"),
             "rating": show.get("rating"),
             "votes": show.get("votes"),
             "certification": show.get("certification"),
@@ -260,7 +284,9 @@ def run():
         print("[DB] 数据库为空，将拉取全部历史记录")
 
     print(f"[Trakt] 开始拉取用户 {TRAKT_USERNAME} 的观影历史...")
-    history = fetch_history()
+    if latest:
+        print(f"[Trakt] 增量模式：从 {latest} 开始拉取")
+    history = fetch_history(since=latest)
 
     if not history:
         print("[Trakt] 没有观影记录，退出")
@@ -278,7 +304,7 @@ def run():
         if not play:
             continue
 
-        # 增量模式：跳过不晚于最新记录的数据
+        # 防御性过滤：服务端 start_at 已过滤，此处作为兜底
         if latest and play["watched_at"] <= latest:
             skip_count += 1
             continue
