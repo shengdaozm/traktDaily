@@ -1,5 +1,9 @@
 # traktDaily 开发计划
 
+> Apache ECharts
+> 一个基于 JavaScript 的开源可视化图表库
+
+
 ## 1. 项目概述
 
 定时抓取 Trakt 观影数据，按月聚合统计，以静态网页展示月度/年度报告，预留大模型总结接口。
