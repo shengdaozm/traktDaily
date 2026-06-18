@@ -120,139 +120,10 @@
       font-size: 1.15rem; font-weight: 700; color: var(--text-bright);
       margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
     }
-    .card h2 .icon { font-size: 1.2rem; }
-
-    /* ── 排行榜 ── */
-    .rank-list { list-style: none; }
-    .rank-item {
-      display: flex; align-items: center; gap: 14px; padding: 14px 0;
-      border-bottom: 1px solid rgba(48, 54, 61, 0.4);
-      transition: background var(--transition);
-    }
-    .rank-item:last-child { border-bottom: none; }
-    .rank-item:hover { background: rgba(88, 166, 255, 0.03); border-radius: 6px; padding-left: 8px; padding-right: 8px; }
-    .rank-num {
-      width: 32px; height: 32px; border-radius: 8px; display: flex;
-      align-items: center; justify-content: center; font-size: 0.85rem;
-      font-weight: 800; color: var(--muted); background: rgba(48, 54, 61, 0.5);
-      flex-shrink: 0;
-    }
-    .rank-item:nth-child(1) .rank-num { background: linear-gradient(135deg, #f0c040, #e2a800); color: #0a0e14; }
-    .rank-item:nth-child(2) .rank-num { background: linear-gradient(135deg, #b0b0b0, #909090); color: #0a0e14; }
-    .rank-item:nth-child(3) .rank-num { background: linear-gradient(135deg, #cd7f32, #a8621e); color: #0a0e14; }
-    .rank-poster {
-      width: 52px; height: 78px; border-radius: 6px; object-fit: cover;
-      background: rgba(48, 54, 61, 0.5); flex-shrink: 0;
-      border: 1px solid rgba(48, 54, 61, 0.4);
-    }
-    .rank-poster-placeholder {
-      width: 52px; height: 78px; border-radius: 6px; flex-shrink: 0;
-      background: rgba(48, 54, 61, 0.3); display: flex;
-      align-items: center; justify-content: center; font-size: 1.2rem;
-      border: 1px solid rgba(48, 54, 61, 0.4);
-    }
-    .rank-info { flex: 1; min-width: 0; }
-    .rank-info .title { font-size: 0.95rem; font-weight: 600; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .rank-info .meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
-    .rank-info .genres { margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; }
-    .genre-tag {
-      font-size: 0.68rem; padding: 2px 8px; background: rgba(88, 166, 255, 0.1);
-      color: var(--primary); border-radius: 10px; border: 1px solid rgba(88, 166, 255, 0.2);
-    }
-    .rank-stats { text-align: right; flex-shrink: 0; }
-    .rank-stats .count { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
-    .rank-stats .duration { font-size: 0.75rem; color: var(--muted); }
-
-    /* ── 媒体库 ── */
-    .toolbar {
-      display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
-    }
-    .search-box {
-      flex: 1; min-width: 200px; padding: 9px 14px;
-      background: rgba(13, 17, 23, 0.6); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); color: var(--text); font-size: 0.9rem;
-      outline: none; transition: border-color var(--transition);
-    }
-    .search-box::placeholder { color: var(--muted); }
-    .search-box:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
-    .filter-group { display: flex; gap: 4px; }
-    .filter-btn {
-      padding: 8px 14px; border: 1px solid var(--border); background: transparent;
-      color: var(--muted); font-size: 0.82rem; border-radius: var(--radius-sm); cursor: pointer;
-      transition: all var(--transition); font-weight: 500;
-    }
-    .filter-btn:hover { color: var(--text-bright); border-color: rgba(88, 166, 255, 0.4); }
-    .filter-btn.active { background: rgba(88, 166, 255, 0.12); color: var(--primary); border-color: var(--primary); }
-    .sort-select {
-      padding: 8px 12px; background: rgba(13, 17, 23, 0.6); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); color: var(--text); font-size: 0.82rem; outline: none; cursor: pointer;
-    }
-    .media-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px;
-    }
-    .media-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); overflow: hidden; cursor: pointer;
-      transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
-    }
-    .media-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--primary);
-      box-shadow: 0 12px 32px var(--primary-glow);
-    }
-    .media-card .poster-wrap {
-      aspect-ratio: 2/3; background: rgba(48, 54, 61, 0.3);
-      display: flex; align-items: center; justify-content: center;
-      position: relative; overflow: hidden;
-    }
-    .media-card .poster-wrap img {
-      width: 100%; height: 100%; object-fit: cover;
-      transition: transform 0.4s ease;
-    }
-    .media-card:hover .poster-wrap img { transform: scale(1.06); }
-    .media-card .poster-placeholder { font-size: 2.5rem; opacity: 0.5; }
-    .media-card .card-body { padding: 12px 14px; }
-    .media-card .card-title { font-size: 0.85rem; font-weight: 600; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .media-card .card-meta { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
-    .media-card .card-rating { font-size: 0.75rem; margin-top: 3px; }
-    .media-card .card-rating .star { color: var(--accent); }
+.card h2 .icon { font-size: 1.2rem; }
 
     .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
     .empty-state .icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; }
-
-    /* ── 弹窗 ── */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
-      z-index: 200; display: flex; align-items: center; justify-content: center;
-      opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
-      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    }
-    .modal-overlay.open { opacity: 1; visibility: visible; }
-    .modal {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 32px; max-width: 560px; width: 90%;
-      max-height: 85vh; overflow-y: auto; position: relative;
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      transform: translateY(20px); transition: transform 0.3s;
-    }
-    .modal-overlay.open .modal { transform: translateY(0); }
-    .modal-close {
-      position: absolute; top: 16px; right: 16px;
-      width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border);
-      background: transparent; color: var(--muted); font-size: 1.1rem;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: all var(--transition);
-    }
-    .modal-close:hover { color: var(--text-bright); border-color: var(--primary); }
-    .modal h3 { font-size: 1.3rem; color: var(--text-bright); margin-bottom: 6px; }
-    .modal .modal-year { font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; }
-    .modal .modal-overview { font-size: 0.9rem; color: var(--text); line-height: 1.7; margin-bottom: 16px; }
-    .modal .modal-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-    .modal .modal-meta span {
-      font-size: 0.78rem; padding: 4px 10px; background: rgba(88, 166, 255, 0.08);
-      border-radius: 6px; color: var(--primary); border: 1px solid rgba(88, 166, 255, 0.15);
-    }
-    .modal .modal-genres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 
     /* ── 图表区 ── */
     .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
@@ -293,16 +164,10 @@
       .stat-card { padding: 16px 14px; }
       .stat-card .stat-value { font-size: 1.5rem; }
       .tab-btn { font-size: 0.8rem; padding: 8px 10px; }
-      .media-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-      .toolbar { flex-direction: column; }
-      .search-box { width: 100%; }
       .charts-grid { grid-template-columns: 1fr; }
-      .rank-poster, .rank-poster-placeholder { width: 40px; height: 60px; }
-      .modal { padding: 24px; }
     }
     @media (max-width: 480px) {
       .stats-row { grid-template-columns: 1fr 1fr; }
-      .media-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
@@ -327,7 +192,6 @@
     <nav class="tab-nav animate-in">
       <button class="tab-btn active" data-tab="overview">📈 概览</button>
       <button class="tab-btn" data-tab="heatmap">🔥 热力图</button>
-      <button class="tab-btn" data-tab="library">🎬 媒体库</button>
       <button class="tab-btn" data-tab="charts">📊 图表</button>
     </nav>
 
@@ -337,22 +201,12 @@
         <h2><span class="icon">📈</span> 月度观影趋势</h2>
         <div id="trend-chart" class="chart-box"></div>
       </div>
-      <div class="card animate-in">
-        <h2><span class="icon">🏆</span> 观影次数 Top 10</h2>
-        <div id="top10-chart" class="chart-box"></div>
-      </div>
     </div>
 
     <!-- ── Tab: 热力图 ── -->
     <div class="tab-panel" id="panel-heatmap">
       <div class="card animate-in">
         <h2><span class="icon">🔥</span> 观影日历热力图</h2>
-        <div class="toolbar" style="margin-bottom:16px;">
-          <div class="filter-group" id="heatmap-range-filter">
-            <button class="filter-btn" data-range="year">今年</button>
-            <button class="filter-btn active" data-range="all">全部</button>
-          </div>
-        </div>
         <div id="calendar-heatmap" class="chart-box-heatmap"></div>
         <div class="heatmap-legend">
           少 <span class="lv0"></span> <span class="lv1"></span> <span class="lv2"></span> <span class="lv3"></span> <span class="lv4"></span> 多
@@ -369,32 +223,6 @@
             <h3>按时长（小时）</h3>
             <div id="genre-pie-minutes" class="chart-box"></div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Tab: 媒体库 ── -->
-    <div class="tab-panel" id="panel-library">
-      <div class="card animate-in">
-        <h2><span class="icon">🎬</span> 媒体库</h2>
-        <div class="toolbar">
-          <input type="text" class="search-box" id="media-search" placeholder="搜索标题、年份...">
-          <div class="filter-group" id="media-type-filter">
-            <button class="filter-btn active" data-type="all">全部</button>
-            <button class="filter-btn" data-type="movie">🎥 电影</button>
-            <button class="filter-btn" data-type="show">📺 剧集</button>
-          </div>
-          <select class="sort-select" id="media-sort">
-            <option value="title">按名称</option>
-            <option value="year">按年份</option>
-            <option value="rating">按评分</option>
-            <option value="watch_count">按观看次数</option>
-          </select>
-        </div>
-        <div class="media-grid" id="media-grid"></div>
-        <div class="empty-state" id="media-empty" style="display:none;">
-          <div class="icon">🔍</div>
-          <p>没有找到匹配的媒体</p>
         </div>
       </div>
     </div>
@@ -417,18 +245,7 @@
       </div>
     </div>
 
-    <!-- ── 媒体详情弹窗 ── -->
-    <div class="modal-overlay" id="modal-overlay">      <div class="modal" id="modal">
-        <button class="modal-close" id="modal-close">✕</button>
-        <h3 id="modal-title"></h3>
-        <div class="modal-year" id="modal-year"></div>
-        <div class="modal-genres" id="modal-genres"></div>
-        <div class="modal-meta" id="modal-meta"></div>
-        <div class="modal-overview" id="modal-overview"></div>
-      </div>
     </div>
-
-    <footer>
       <p>数据来源 <a href="https://trakt.tv" target="_blank">Trakt</a> · 海报来自 <a href="https://themoviedb.org" target="_blank">TMDB</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a></p>
     </footer>
   </div>
@@ -437,7 +254,6 @@
     // ── 全局状态 ──
     let appData = null;
     let mediaList = [];
-    let mediaWithWatchCount = [];
     let charts = {};
 
     // ── 数据加载 ──
@@ -449,8 +265,6 @@
         ]);
         appData = await summaryResp.json();
         mediaList = mediaResp ? await mediaResp.json() : [];
-
-        buildWatchCountMap();
         renderAll();
       } catch (err) {
         document.getElementById('stats-cards').innerHTML =
@@ -459,21 +273,11 @@
       }
     }
 
-    function buildWatchCountMap() {
-      const countMap = {};
-      mediaWithWatchCount = mediaList.map(m => ({
-        ...m,
-        watch_count: countMap[m.trakt_id] || 0
-      }));
-    }
-
     function renderAll() {
       renderStats();
       renderTrendChart();
-      renderTopBarChart();
       renderHeatmap();
       renderGenrePies();
-      renderLibrary();
       renderCharts();
     }
 
@@ -668,95 +472,7 @@
       });
     }
 
-    // ── Top 10 排行榜 ──
-    function renderTopBarChart() {
-      const topMedia = appData.top_media || [];
-      if (!topMedia.length) return;
-
-      const top10 = topMedia.slice(0, 10).reverse();
-      const chart = getOrCreateChart('top10-chart');
-      if (!chart) return;
-
-      const maxCount = top10[top10.length - 1].watch_count;
-      const useGradient = new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-        { offset: 0, color: 'rgba(88,166,255,0.3)' },
-        { offset: 1, color: '#58a6ff' }
-      ]);
-
-      chart.setOption({
-        tooltip: {
-          ...TOOLTIP_STYLE,
-          trigger: 'axis',
-          axisPointer: { type: 'shadow' },
-          formatter: function(params) {
-            const p = params[0];
-            const m = top10.find(x => x.title === p.name);
-            const hours = m ? Math.round((m.total_minutes || 0) / 60) : 0;
-            return `<span style="font-weight:600">${p.name}</span><br/>观看 <b>${p.value}</b> 次 · 合计 <b>${hours}</b> 小时`;
-          }
-        },
-        grid: { left: 120, right: 30, top: 10, bottom: 20 },
-        xAxis: {
-          type: 'value',
-          name: '次',
-          nameTextStyle: { color: '#8b949e' },
-          min: 0,
-          max: Math.ceil(maxCount * 1.15),
-          axisLine: { show: false },
-          axisLabel: { color: '#8b949e' },
-          splitLine: { lineStyle: { color: 'rgba(48,54,61,0.3)' } }
-        },
-        yAxis: {
-          type: 'category',
-          data: top10.map(m => m.title),
-          axisLine: { lineStyle: { color: 'rgba(48,54,61,0.6)' } },
-          axisLabel: {
-            color: '#c9d1d9',
-            fontSize: 12,
-            width: 110,
-            overflow: 'truncate',
-            ellipsis: '...'
-          },
-          axisTick: { show: false },
-          inverse: true
-        },
-        series: [{
-          type: 'bar',
-          data: top10.map((m, i) => ({
-            value: m.watch_count,
-            itemStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                { offset: 0, color: 'rgba(88,166,255,0.25)' },
-                { offset: 1, color: '#58a6ff' }
-              ]),
-              borderRadius: [0, 6, 6, 0]
-            }
-          })),
-          barMaxWidth: 24,
-          label: {
-            show: true,
-            position: 'right',
-            color: '#8b949e',
-            fontSize: 11,
-            formatter: '{c} 次'
-          },
-          emphasis: {
-            itemStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                { offset: 0, color: 'rgba(88,166,255,0.45)' },
-                { offset: 1, color: '#79c0ff' }
-              ])
-            }
-          }
-        }],
-        animationDuration: 1000,
-        animationEasing: 'cubicOut'
-      });
-    }
-
     // ── 日历热力图 ──
-    let heatmapRange = 'all';
-
     function renderHeatmap() {
       const stats = appData.daily_genre_stats || [];
       if (!stats.length) return;
@@ -767,10 +483,7 @@
         dailyMap[d] = (dailyMap[d] || 0) + (s.count || 0);
       });
 
-      let yearFilter = null;
-      if (heatmapRange === 'year') {
-        yearFilter = new Date().getFullYear();
-      }
+      const yearFilter = new Date().getFullYear();
 
       const data = [];
       const allDates = Object.keys(dailyMap).sort();
@@ -829,14 +542,6 @@
         animationDuration: 800
       });
     }
-
-    document.getElementById('heatmap-range-filter').addEventListener('click', function(e) {
-      if (!e.target.classList.contains('filter-btn')) return;
-      this.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      heatmapRange = e.target.dataset.range;
-      renderHeatmap();
-    });
 
     // ── 类型分布饼图 ──
     function renderGenrePies() {
@@ -942,128 +647,6 @@
         });
       }
     }
-
-    // ── 媒体库 ──
-    let libFilter = 'all';
-    let libSort = 'title';
-    let libSearch = '';
-
-    function renderLibrary() {
-      const grid = document.getElementById('media-grid');
-      const empty = document.getElementById('media-empty');
-
-      let filtered = mediaWithWatchCount.filter(m => {
-        if (libFilter === 'movie') return m.media_type === 'movie';
-        if (libFilter === 'show') return m.media_type === 'show';
-        return true;
-      });
-
-      if (libSearch) {
-        const q = libSearch.toLowerCase();
-        filtered = filtered.filter(m =>
-          (m.title || '').toLowerCase().includes(q) ||
-          String(m.year || '').includes(q)
-        );
-      }
-
-      filtered.sort((a, b) => {
-        switch (libSort) {
-          case 'year': return (b.year || 0) - (a.year || 0);
-          case 'rating': return (b.rating || 0) - (a.rating || 0);
-          case 'watch_count': return (b.watch_count || 0) - (a.watch_count || 0);
-          default: return (a.title || '').localeCompare(b.title || '');
-        }
-      });
-
-      if (!filtered.length) {
-        grid.innerHTML = '';
-        empty.style.display = '';
-        return;
-      }
-      empty.style.display = 'none';
-
-      grid.innerHTML = filtered.map(m => {
-        const rating = m.rating ? Number(m.rating).toFixed(1) : null;
-        return `
-          <div class="media-card" onclick="openMediaDetail('${escAttr(m.title)}', ${m.trakt_id})" data-trakt-id="${m.trakt_id}">
-            <div class="poster-wrap">
-              ${m.poster_url
-                ? `<img src="${m.poster_url}" alt="${escHtml(m.title)}" loading="lazy">`
-                : `<span class="poster-placeholder">${m.media_type === 'movie' ? '🎬' : '📺'}</span>`}
-            </div>
-            <div class="card-body">
-              <div class="card-title" title="${escHtml(m.title)}">${escHtml(m.title)}</div>
-              <div class="card-meta">${m.year || '--'} · ${m.media_type === 'movie' ? '电影' : '剧集'}</div>
-              ${rating ? `<div class="card-rating"><span class="star">⭐</span> ${rating}</div>` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    document.getElementById('media-search').addEventListener('input', function () {
-      libSearch = this.value;
-      renderLibrary();
-    });
-
-    document.getElementById('media-type-filter').addEventListener('click', function (e) {
-      if (!e.target.classList.contains('filter-btn')) return;
-      this.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      libFilter = e.target.dataset.type;
-      renderLibrary();
-    });
-
-    document.getElementById('media-sort').addEventListener('change', function () {
-      libSort = this.value;
-      renderLibrary();
-    });
-
-    // ── 媒体详情弹窗 ──
-    function openMediaDetail(title, traktId) {
-      const m = mediaList.find(x => x.trakt_id === traktId);
-      if (!m) return;
-
-      document.getElementById('modal-title').textContent = m.title;
-      document.getElementById('modal-year').textContent =
-        `${m.year || '--'} · ${m.media_type === 'movie' ? '电影' : '剧集'}${m.certification ? ' · ' + m.certification : ''}${m.status ? ' · ' + (m.status === 'ended' ? '已完结' : m.status === 'released' ? '已上映' : m.status) : ''}`;
-
-      const genres = safeParseJSON(m.genres, []);
-      document.getElementById('modal-genres').innerHTML = genres.map(g =>
-        `<span class="genre-tag">${escHtml(g)}</span>`
-      ).join('') || '<span class="genre-tag">暂无</span>';
-
-      const metaItems = [];
-      if (m.rating) metaItems.push(`⭐ ${Number(m.rating).toFixed(1)}`);
-      if (m.votes) metaItems.push(`${m.votes.toLocaleString()} 票`);
-      if (m.runtime) metaItems.push(`${m.runtime} 分钟`);
-      if (m.country) metaItems.push(m.country.toUpperCase());
-      if (m.language) metaItems.push(m.language.toUpperCase());
-      if (m.network) metaItems.push(m.network);
-      const wc = mediaWithWatchCount.find(x => x.trakt_id === traktId);
-      if (wc && wc.watch_count) metaItems.push(`观看 ${wc.watch_count} 次`);
-      document.getElementById('modal-meta').innerHTML = metaItems.map(t =>
-        `<span>${escHtml(t)}</span>`
-      ).join('');
-
-      document.getElementById('modal-overview').textContent = m.overview || '暂无简介';
-
-      document.getElementById('modal-overlay').classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal() {
-      document.getElementById('modal-overlay').classList.remove('open');
-      document.body.style.overflow = '';
-    }
-
-    document.getElementById('modal-close').addEventListener('click', closeModal);
-    document.getElementById('modal-overlay').addEventListener('click', function (e) {
-      if (e.target === this) closeModal();
-    });
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeModal();
-    });
 
     // ── 图表 Tab ──
     function renderCharts() {
@@ -1317,22 +900,6 @@
     window.addEventListener('resize', function() {
       Object.values(charts).forEach(c => c && c.resize && c.resize());
     });
-
-    // ── 工具函数 ──
-    function escHtml(s) {
-      const div = document.createElement('div');
-      div.textContent = s;
-      return div.innerHTML;
-    }
-
-    function escAttr(s) {
-      return s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    }
-
-    function safeParseJSON(str, fallback) {
-      if (!str) return fallback;
-      try { return JSON.parse(str); } catch { return fallback; }
-    }
 
     // ── 启动 ──
     initTabs();

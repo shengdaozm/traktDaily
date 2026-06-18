@@ -13,7 +13,6 @@ from scripts.db import (
     get_genre_stats,
     get_all_media,
     get_daily_genre_stats,
-    get_top_media,
     ensure_dirs,
 )
 
@@ -36,7 +35,6 @@ def run():
         "monthly_stats": monthly_stats,
         "genre_stats": get_genre_stats(),
         "daily_genre_stats": get_daily_genre_stats(),
-        "top_media": get_top_media(20),
     }
 
     with open(f"{WEB_DATA_DIR}/summary.json", "w", encoding="utf-8") as f:
