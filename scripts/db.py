@@ -347,6 +347,19 @@ def get_daily_genre_stats() -> list[dict]:
     return list(result.values())
 
 
+def get_all_plays() -> list[dict]:
+    """获取所有观影记录（按观看时间倒序），关联媒体表获取海报。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT p.*, m.poster_url
+        FROM plays p
+        LEFT JOIN media m ON m.trakt_id = p.media_trakt_id
+        ORDER BY p.watched_at DESC
+    """).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def ensure_dirs():
     """确保 data 和 web 相关目录存在。"""
     os.makedirs(DB_PATH.replace("trakt.db", ""), exist_ok=True)

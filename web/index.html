@@ -140,6 +140,58 @@
     .heatmap-legend .lv3 { background: #26a641; }
     .heatmap-legend .lv4 { background: #39d353; }
 
+    /* ── 最近观影列表 ── */
+    .recent-list { display: flex; flex-direction: column; gap: 1px; }
+    .recent-item {
+      display: flex; align-items: center; gap: 16px;
+      padding: 14px 16px; border-radius: var(--radius-sm);
+      transition: background var(--transition); cursor: default;
+    }
+    .recent-item:hover { background: var(--surface-hover); }
+    .recent-poster {
+      width: 48px; height: 72px; border-radius: 6px;
+      object-fit: cover; background: rgba(48,54,61,0.4); flex-shrink: 0;
+    }
+    .recent-poster-placeholder {
+      width: 48px; height: 72px; border-radius: 6px;
+      background: rgba(48,54,61,0.4); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: var(--muted);
+    }
+    .recent-info { flex: 1; min-width: 0; }
+    .recent-title {
+      font-weight: 600; color: var(--text-bright); font-size: 0.95rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;
+    }
+    .recent-meta {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.8rem; color: var(--muted); flex-wrap: wrap;
+    }
+    .recent-meta .sep { color: rgba(72,79,88,0.6); }
+    .recent-type {
+      padding: 1px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: 600;
+    }
+    .recent-type.movie { background: rgba(88,166,255,0.15); color: var(--primary); }
+    .recent-type.episode { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .recent-date { margin-left: auto; font-size: 0.78rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+
+    /* ── 分页 ── */
+    .pagination {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);
+    }
+    .pagination button {
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--surface); color: var(--text); font-size: 0.85rem;
+      cursor: pointer; transition: all var(--transition);
+    }
+    .pagination button:hover:not(:disabled) {
+      border-color: var(--primary); color: var(--text-bright);
+      background: rgba(88,166,255,0.08);
+    }
+    .pagination button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .pagination .page-info { font-size: 0.85rem; color: var(--muted); }
+
     /* ── 动画 ── */
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
@@ -201,6 +253,13 @@
         <h2><span class="icon">📈</span> 月度观影趋势</h2>
         <div id="trend-chart" class="chart-box"></div>
       </div>
+      <div class="card animate-in" style="margin-top:24px;">
+        <h2><span class="icon">🕐</span> 最近观影</h2>
+        <div id="recent-list" class="recent-list">
+          <div class="empty-state"><p>加载中...</p></div>
+        </div>
+        <div id="recent-pagination" class="pagination" style="display:none;"></div>
+      </div>
     </div>
 
     <!-- ── Tab: 热力图 ── -->
@@ -254,17 +313,22 @@
     // ── 全局状态 ──
     let appData = null;
     let mediaList = [];
+    let recentPlays = [];
+    let recentPage = 1;
+    const PAGE_SIZE = 10;
     let charts = {};
 
     // ── 数据加载 ──
     async function loadData() {
       try {
-        const [summaryResp, mediaResp] = await Promise.all([
+        const [summaryResp, mediaResp, recentResp] = await Promise.all([
           fetch('data/summary.json'),
-          fetch('data/media.json').catch(() => null)
+          fetch('data/media.json').catch(() => null),
+          fetch('data/recent.json').catch(() => null)
         ]);
         appData = await summaryResp.json();
         mediaList = mediaResp ? await mediaResp.json() : [];
+        recentPlays = recentResp ? await recentResp.json() : [];
         renderAll();
       } catch (err) {
         document.getElementById('stats-cards').innerHTML =
@@ -279,6 +343,7 @@
       renderHeatmap();
       renderGenrePies();
       renderCharts();
+      renderRecent();
     }
 
     // ── 统计数字跳动动画 ──
@@ -874,6 +939,80 @@
         animationDuration: 1200,
         animationEasing: 'cubicOut'
       });
+    }
+
+    // ── 最近观影 ──
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr.substring(0, 10);
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      } catch {
+        return dateStr.substring(0, 10);
+      }
+    }
+
+    function renderRecent(page) {
+      if (page === undefined) page = recentPage;
+      recentPage = page;
+
+      const listEl = document.getElementById('recent-list');
+      const paginationEl = document.getElementById('recent-pagination');
+      if (!listEl || !paginationEl) return;
+
+      if (!recentPlays.length) {
+        listEl.innerHTML = '<div class="empty-state"><div class="icon">🎬</div><p>暂无观影记录</p></div>';
+        paginationEl.style.display = 'none';
+        return;
+      }
+
+      const totalPages = Math.ceil(recentPlays.length / PAGE_SIZE);
+      const start = (page - 1) * PAGE_SIZE;
+      const pageItems = recentPlays.slice(start, start + PAGE_SIZE);
+
+      listEl.innerHTML = pageItems.map(item => {
+        const title = item.title || 'Unknown';
+        const mediaType = item.media_type || '';
+        const year = item.year || '';
+        const runtime = item.runtime ? `${item.runtime} min` : '';
+        const watchedAt = formatDate(item.watched_at_local);
+        const posterUrl = item.poster_url;
+
+        const typeClass = mediaType === 'movie' ? 'movie' : 'episode';
+        const typeLabel = mediaType === 'movie' ? '电影' : '剧集';
+        const typeIcon = mediaType === 'movie' ? '🎥' : '📺';
+
+        return `
+          <div class="recent-item">
+            ${posterUrl
+              ? `<img class="recent-poster" src="${posterUrl}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`
+              : ''}
+            <div class="recent-poster-placeholder" style="${posterUrl ? '' : 'display:flex'}">${typeIcon}</div>
+            <div class="recent-info">
+              <div class="recent-title" title="${title}">${title}</div>
+              <div class="recent-meta">
+                <span class="recent-type ${typeClass}">${typeLabel}</span>
+                ${year ? `<span class="sep">·</span><span>${year}</span>` : ''}
+                ${runtime ? `<span class="sep">·</span><span>${runtime}</span>` : ''}
+              </div>
+            </div>
+            <div class="recent-date">${watchedAt}</div>
+          </div>
+        `;
+      }).join('');
+
+      if (totalPages <= 1) {
+        paginationEl.style.display = 'none';
+      } else {
+        paginationEl.style.display = 'flex';
+        paginationEl.innerHTML = `
+          <button ${page <= 1 ? 'disabled' : ''} onclick="renderRecent(${page - 1})">← 上一页</button>
+          <span class="page-info">第 ${page} / ${totalPages} 页</span>
+          <button ${page >= totalPages ? 'disabled' : ''} onclick="renderRecent(${page + 1})">下一页 →</button>
+        `;
+      }
     }
 
     // ── Tab 切换 ──

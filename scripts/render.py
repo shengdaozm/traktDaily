@@ -13,6 +13,7 @@ from scripts.db import (
     get_genre_stats,
     get_all_media,
     get_daily_genre_stats,
+    get_all_plays,
     ensure_dirs,
 )
 
@@ -47,6 +48,12 @@ def run():
     with open(f"{WEB_DATA_DIR}/media.json", "w", encoding="utf-8") as f:
         json.dump(all_media, f, ensure_ascii=False, indent=2)
     print(f"[Render] 已生成 media.json（{len(all_media)} 个媒体）")
+
+    # ── 最近观影记录 ──
+    all_plays = get_all_plays()
+    with open(f"{WEB_DATA_DIR}/recent.json", "w", encoding="utf-8") as f:
+        json.dump(all_plays, f, ensure_ascii=False, indent=2)
+    print(f"[Render] 已生成 recent.json（{len(all_plays)} 条记录）")
 
 
 if __name__ == "__main__":
