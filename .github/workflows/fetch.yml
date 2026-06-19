@@ -9,6 +9,10 @@ on:
   # 允许手动触发（用于首次运行或调试）
   workflow_dispatch:
 
+# 授予 GITHUB_TOKEN 写权限，允许自动 commit & push
+permissions:
+  contents: write
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
