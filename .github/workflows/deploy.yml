@@ -11,6 +11,12 @@ on:
       - 'web/**'
       - 'scripts/render.py'
       - 'scripts/stats.py'
+  # 当 Fetch Trakt Data 工作流完成时自动触发部署
+  # GITHUB_TOKEN 的 push 不会触发其他 workflow，因此需要此触发器
+  workflow_run:
+    workflows: ["Fetch Trakt Data"]
+    types:
+      - completed
   # 允许手动触发（用于首次部署）
   workflow_dispatch:
 
@@ -52,8 +58,6 @@ jobs:
       # render.py 读取 data/trakt.db，生成 web/data/*.json 供前端消费
       - name: 生成前端数据
         run: python -m scripts.render
-        # （阶段二实现，目前 render.py 为空，不会报错）
-        continue-on-error: true
 
       # ⑤ 上传 Pages 产物
       - name: 上传 Pages 产物
