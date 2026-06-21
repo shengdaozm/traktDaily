@@ -128,22 +128,10 @@ traktDaily/
                          └── 部署到 GitHub Pages
 ```
 
-## 数据库设计
-
-使用 SQLite，包含三张核心表：
-
-- **plays**：观影记录（trakt_id、标题、时长、观看时间）
-- **media**：媒体元数据（简介、海报、评分、类型）
-- **monthly_stats**：月度聚合统计（物化视图，加速查询）
-
-详见 `dev.plan` 第 4 节。
-
 ## 未来计划
 
 - [ ] 接入大模型，自动生成月度/年度观影视总结
 - [ ] 年度 Wrapped 风格回顾页面
-- [ ] 支持多用户数据展示
-- [ ] Trakt OAuth 认证（突破 API 请求频率限制）
 
 ## License
 
