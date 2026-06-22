@@ -51,26 +51,28 @@ jobs:
           TRAKT_USERNAME:  ${{ secrets.TRAKT_USERNAME }}
           TMDB_API_KEY:    ${{ secrets.TMDB_API_KEY }}
 
-      # ⑥ 推送数据回私有仓库
+      # ⑥ 生成前端 JSON 数据
+      - name: 生成前端数据
+        run: python -m scripts.render
+
+      # ⑦ 推送数据到私有仓库（数据库 + 前端 JSON）
       - name: 推送数据到私有仓库
         run: |
           cp data/trakt.db /tmp/data-repo/data/trakt.db
           mkdir -p /tmp/data-repo/data/reports
           cp -r data/reports/. /tmp/data-repo/data/reports/ 2>/dev/null || true
+          mkdir -p /tmp/data-repo/web/data
+          cp -r web/data/. /tmp/data-repo/web/data/ 2>/dev/null || true
           cd /tmp/data-repo
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/
+          git add data/ web/data/
           if git diff --cached --quiet; then
             echo "数据无变更，跳过提交"
           else
             git commit -m "data: 自动更新 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             git push
           fi
-
-      # ⑦ 生成前端 JSON 数据
-      - name: 生成前端数据
-        run: python -m scripts.render
 
       # ⑧ 提交前端数据到公开仓库
       - name: 提交前端数据变更

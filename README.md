@@ -2,14 +2,32 @@
 
 定时抓取 [Trakt](https://trakt.tv/) 观影数据，按月聚合统计，以精美静态网页展示月度/年度观影报告。运行在 GitHub Actions 上，每 2 小时自动更新。
 
+## 架构
+
+```
+公开仓库 (traktDaily)                           私有仓库 (traktData)
+┌──────────────────────────────┐       ┌──────────────────────────┐
+│ fetch.yml（每 2 小时）       │       │                          │
+│  ① 拉取私有仓库数据库        │ ←─── │  data/trakt.db 🔒        │
+│  ② 抓取 Trakt → 写入 SQLite  │       │  data/reports/ 🔒       │
+│  ③ render.py 生成前端 JSON   │       │  web/data/ (备份) 🔒    │
+│  ④ 推送数据库 + JSON 回私有库│ ───→ │                          │
+│  ⑤ 推送 web/data/ 到公开仓库 │       └──────────────────────────┘
+│                              │
+│ deploy.yml                   │
+│  → 部署 web/ 到 GitHub Pages │
+└──────────────────────────────┘
+```
+
+> 观影数据（SQLite 数据库）存储在私有仓库中，前端 JSON 数据同时保存在公开和私有仓库。
+
 ## 功能概览
 
 - **自动抓取**：每 2 小时通过 GitHub Actions 定时拉取 Trakt 观影历史
-- **本地数据库**：SQLite 持久化存储，支持按日期、媒体类型等快速查询
-- **月度/年度报告**：自动统计观影时长、数量、类型分布、Top 作品排行
-- **精美网页展示**：纯静态 HTML + Chart.js 图表，部署在 GitHub Pages
+- **数据隐私**：SQLite 数据库存储在私有仓库，公开仓库仅包含前端页面
+- **月度/年度报告**：自动统计观影时长、数量、类型分布
+- **精美网页展示**：纯静态 HTML + ECharts 图表，部署在 GitHub Pages
 - **海报展示**：通过 TMDB API 获取影片海报和背景图
-- **未来接入大模型**：自动生成月度影评总结和年度回顾文案
 
 ## 快速开始
 
@@ -17,23 +35,27 @@
 
 点击右上角 Fork 按钮，将仓库复制到你的 GitHub 账号下。
 
-### 2. 配置 Secrets
+### 2. 创建私有数据仓库
+
+创建一个**私有**仓库（如 `traktData`），用于存储观影数据库。
+
+### 3. 配置 Secrets
 
 在 Fork 后的仓库中，进入 **Settings → Secrets and variables → Actions**，添加以下 Secrets：
 
 | Secret 名称 | 说明 | 获取方式 |
 |---|---|---|
 | `TRAKT_CLIENT_ID` | Trakt API 的 Client ID | [Trakt API Settings](https://trakt.tv/oauth/applications) 创建应用获取 |
+| `TRAKT_USERNAME` | Trakt 用户名 | 你的 Trakt 账号名 |
 | `TMDB_API_KEY` | TMDB API Key（获取海报） | [TMDB API Settings](https://www.themoviedb.org/settings/api) 申请 |
+| `GH_PAT` | GitHub Personal Access Token | [GitHub Token Settings](https://github.com/settings/tokens) 创建，勾选 `repo` 权限 |
 
-> 如果你已有 Trakt 账号，在 Trakt API 页面创建应用时选择 `urn:ietf:wg:oauth:2.0:oob` 作为 Redirect URI，然后复制 Client ID 即可。
-
-### 3. 启用 GitHub Pages
+### 4. 启用 GitHub Pages
 
 进入 **Settings → Pages**：
 - **Source**：选择 `GitHub Actions`
 
-### 4. 开启定时任务
+### 5. 开启定时任务
 
 GitHub Actions 定时任务默认开启。如需手动触发首次运行：
 
@@ -41,7 +63,7 @@ GitHub Actions 定时任务默认开启。如需手动触发首次运行：
 2. 点击左侧 **Fetch Trakt Data**
 3. 点击 **Run workflow** → **Run workflow**
 
-首次运行后，你的观影数据会被写入 `data/trakt.db`，并自动部署网页到 `https://<你的用户名>.github.io/traktDaily/`。
+首次运行后，自动部署网页到 `https://<你的用户名>.github.io/traktDaily/`。
 
 ## 本地开发
 
@@ -61,6 +83,7 @@ pip install -r requirements.txt
 ```bash
 # 设置环境变量
 export TRAKT_CLIENT_ID="你的_Client_ID"
+export TRAKT_USERNAME="你的_Trakt_用户名"
 export TMDB_API_KEY="你的_TMDB_API_Key"
 
 # 执行抓取
@@ -82,7 +105,7 @@ python -m http.server 8080 --directory web/
 ## 项目结构
 
 ```
-traktDaily/
+traktDaily/（公开仓库）
 ├── .github/workflows/
 │   ├── fetch.yml              # 定时抓取工作流（每 2 小时）
 │   └── deploy.yml             # 前端部署工作流（GitHub Pages）
@@ -90,21 +113,21 @@ traktDaily/
 │   ├── fetch.py               # 主入口：拉取 Trakt API → 写入 SQLite
 │   ├── db.py                  # SQLite 封装：建表、插入、查询、聚合
 │   ├── tmdb.py                # TMDB API 封装：搜索、海报下载
-│   ├── stats.py               # 统计模块：月度/年度报告数据生成
 │   ├── render.py              # 渲染 JSON 数据供前端消费
 │   └── config.py              # 配置文件（API Key、路径等）
-├── data/                      # 数据存储（随 Git 提交）
-│   ├── trakt.db               # SQLite 数据库
-│   └── reports/               # 统计报告 JSON
 ├── web/                       # 前端页面（GitHub Pages 部署目录）
 │   ├── index.html             # 主页面
-│   ├── data/                  # 前端 JSON 数据（deploy 时生成）
-│   ├── assets/
-│   │   ├── style.css          # 样式
-│   │   └── posters/           # 下载的海报图片
-├── dev.plan                   # 开发计划
+│   ├── data/                  # 前端 JSON 数据（fetch 时生成）
+│   └── assets/                # 样式和海报图片
 ├── requirements.txt
 └── README.md
+
+traktData/（私有仓库，数据存储）
+├── data/
+│   ├── trakt.db               # SQLite 数据库
+│   └── reports/               # 统计报告
+└── web/
+    └── data/                  # 前端 JSON 备份
 ```
 
 ## 工作流程
@@ -115,23 +138,19 @@ traktDaily/
        ▼
   fetch.yml 运行
        │
+       ├── 从私有仓库拉取 data/trakt.db（增量基准）
        ├── Python 脚本拉取 Trakt API
        ├── 写入 SQLite（去重）
-       ├── 下载本次新增媒体的海报（TMDB）
-       ├── 按月更新统计表
-       └── 有变更 → git commit & push
-                         │
-                         ▼
-                    deploy.yml 被触发
-                         │
-                         ├── render.py 生成 web/data/*.json
-                         └── 部署到 GitHub Pages
+       ├── 下载新增媒体的海报（TMDB）
+       ├── render.py 生成 web/data/*.json
+       ├── 推送数据库 + 前端 JSON 到私有仓库
+       └── 推送 web/data/ 到公开仓库
+                        │
+                        ▼
+                   deploy.yml 被触发
+                        │
+                        └── 部署到 GitHub Pages
 ```
-
-## 未来计划
-
-- [ ] 接入大模型，自动生成月度/年度观影视总结
-- [ ] 年度 Wrapped 风格回顾页面
 
 ## License
 
