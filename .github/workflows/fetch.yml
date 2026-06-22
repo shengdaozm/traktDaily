@@ -20,22 +20,30 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      # ① 检出代码（包含 data/trakt.db 历史数据）
+      # ① 检出公开仓库代码
       - name: 检出仓库
         uses: actions/checkout@v4
 
-      # ② 配置 Python 环境
+      # ② 从私有仓库拉取数据库（增量基准）
+      - name: 拉取私有仓库数据
+        run: |
+          git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/shengdaozm/traktData.git /tmp/data-repo
+          cp /tmp/data-repo/data/trakt.db data/trakt.db
+          mkdir -p data/reports
+          cp -r /tmp/data-repo/data/reports/. data/reports/ 2>/dev/null || true
+
+      # ③ 配置 Python 环境
       - name: 配置 Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      # ③ 安装依赖
+      # ④ 安装依赖
       - name: 安装 Python 依赖
         run: pip install -r requirements.txt
 
-      # ④ 执行数据抓取
+      # ⑤ 执行数据抓取
       - name: 抓取 Trakt 数据
         run: python -m scripts.fetch
         env:
@@ -43,17 +51,36 @@ jobs:
           TRAKT_USERNAME:  ${{ secrets.TRAKT_USERNAME }}
           TMDB_API_KEY:    ${{ secrets.TMDB_API_KEY }}
 
-      # ⑤ 如果数据有变更，提交并推送
-      # git diff --cached --quiet 检查暂存区是否有变更
-      # 无变更时静默退出，有变更时提交并推送
-      - name: 提交数据变更
+      # ⑥ 推送数据回私有仓库
+      - name: 推送数据到私有仓库
         run: |
+          cp data/trakt.db /tmp/data-repo/data/trakt.db
+          mkdir -p /tmp/data-repo/data/reports
+          cp -r data/reports/. /tmp/data-repo/data/reports/ 2>/dev/null || true
+          cd /tmp/data-repo
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/trakt.db data/reports/
+          git add data/
           if git diff --cached --quiet; then
             echo "数据无变更，跳过提交"
           else
             git commit -m "data: 自动更新 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            git push
+          fi
+
+      # ⑦ 生成前端 JSON 数据
+      - name: 生成前端数据
+        run: python -m scripts.render
+
+      # ⑧ 提交前端数据到公开仓库
+      - name: 提交前端数据变更
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add web/data/
+          if git diff --cached --quiet; then
+            echo "前端数据无变更，跳过提交"
+          else
+            git commit -m "data: 自动更新前端数据 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             git push
           fi

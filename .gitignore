@@ -21,7 +21,9 @@ Thumbs.db
 .env
 .env.local
 
-# 数据备份（数据库通过 Git 版本控制，但排除临时文件）
+# 数据库和报告存储在私有仓库，不提交到公开仓库
+data/trakt.db
+data/reports/
 data/*.db-journal
 data/*.db-wal
 data/*.db-shm
