@@ -28,8 +28,8 @@ jobs:
       - name: 拉取私有仓库数据
         run: |
           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/shengdaozm/traktData.git /tmp/data-repo
-          cp /tmp/data-repo/data/trakt.db data/trakt.db
           mkdir -p data/reports
+          cp /tmp/data-repo/data/trakt.db data/trakt.db
           cp -r /tmp/data-repo/data/reports/. data/reports/ 2>/dev/null || true
 
       # ③ 配置 Python 环境
