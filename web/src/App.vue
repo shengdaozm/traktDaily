@@ -35,12 +35,41 @@ provide('registerResize', registerResize)
 provide('unregisterResize', unregisterResize)
 
 const scrollProgress = ref(0)
+const activeSection = ref(0)
+const sections = [
+  { id: 'hero', label: '封面' },
+  { id: 'stats', label: '总览' },
+  { id: 'monthly', label: '月度' },
+  { id: 'top', label: '排行' },
+  { id: 'genre', label: '类型' },
+  { id: 'heatmap', label: '日历' },
+  { id: 'library', label: '剧库' },
+  { id: 'closing', label: '总结' },
+]
 
 function handleScroll() {
   const scrollTop = window.scrollY
   const docHeight = document.documentElement.scrollHeight - window.innerHeight
   scrollProgress.value = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
+
+  const winH = window.innerHeight
+  let bestIdx = 0
+  let bestDist = Infinity
+  sections.forEach((_, i) => {
+    const el = document.getElementById(`section-${i}`)
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const dist = Math.abs(rect.top)
+    if (dist < bestDist) { bestDist = dist; bestIdx = i }
+  })
+  activeSection.value = bestIdx
+
   resizeCallbacks.value.forEach(fn => fn?.())
+}
+
+function scrollToSection(idx) {
+  const el = document.getElementById(`section-${idx}`)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 onMounted(() => window.addEventListener('scroll', handleScroll, { passive: true }))
@@ -50,6 +79,15 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 <template>
   <div class="app">
     <div class="scroll-progress" :style="{ width: scrollProgress + '%' }" />
+
+    <nav class="nav-dots" v-if="!loading && !error">
+      <button
+        v-for="(s, i) in sections" :key="i"
+        class="nav-dot" :class="{ active: activeSection === i }"
+        :title="s.label"
+        @click="scrollToSection(i)"
+      />
+    </nav>
 
     <template v-if="loading">
       <div class="loading-screen">
@@ -66,14 +104,14 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
     </template>
 
     <template v-else>
-      <HeroIntro :media-list="mediaList" />
-      <TotalStats />
-      <MonthlyJourney />
-      <TopWatched />
-      <GenreSection />
-      <HeatmapSection />
-      <LibrarySection />
-      <ClosingSection />
+      <div :id="`section-0`"><HeroIntro :media-list="mediaList" /></div>
+      <div :id="`section-1`"><TotalStats /></div>
+      <div :id="`section-2`"><MonthlyJourney /></div>
+      <div :id="`section-3`"><TopWatched /></div>
+      <div :id="`section-4`"><GenreSection /></div>
+      <div :id="`section-5`"><HeatmapSection /></div>
+      <div :id="`section-6`"><LibrarySection /></div>
+      <div :id="`section-7`"><ClosingSection /></div>
     </template>
   </div>
 </template>
@@ -81,9 +119,9 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 <style scoped>
 .app { min-height: 100vh; }
 .scroll-progress {
-  position: fixed; top: 0; left: 0; height: 3px;
+  position: fixed; top: 0; left: 0; height: 2px;
   background: linear-gradient(90deg, var(--primary), var(--accent), var(--accent-warm));
-  z-index: 999; transition: width 0.1s ease;
+  z-index: 999; transition: width 0.05s linear;
 }
 .loading-screen {
   min-height: 100vh; display: flex; flex-direction: column;

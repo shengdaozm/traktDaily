@@ -48,11 +48,11 @@ const backdropUrl = computed(() => {
   animation: fadeIn 1.2s ease both;
 }
 .hero-year {
-  font-size: 7rem; font-weight: 900;
+  font-size: 6rem; font-weight: 900;
   background: linear-gradient(135deg, #58a6ff, #8b5cf6, #f0c040);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  line-height: 1; margin-bottom: 8px;
-  letter-spacing: -4px;
+  line-height: 1; margin-bottom: 6px;
+  letter-spacing: -3px;
 }
 .hero-line {
   width: 60px; height: 3px; border-radius: 2px;

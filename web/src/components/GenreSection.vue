@@ -82,12 +82,12 @@ onMounted(() => {
 <style scoped>
 .genre-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 80px 24px;
-  background: linear-gradient(160deg, #1e1b2e 0%, #0d1117 60%);
+  padding: 60px 24px;
+  background: linear-gradient(180deg, #0d1117 0%, #1a1a2e 100%);
 }
-.section-content { max-width: 700px; width: 100%; }
-.section-label { font-size: 0.9rem; color: var(--accent); text-align: center; margin-bottom: 16px; font-weight: 600; }
-.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; backdrop-filter: blur(20px); }
-.chart-box { width: 100%; height: 400px; }
-@media (max-width: 768px) { .chart-box { height: 300px; } }
+.section-content { max-width: 680px; width: 100%; }
+.section-label { font-size: 0.85rem; color: var(--accent); text-align: center; margin-bottom: 12px; font-weight: 600; }
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; backdrop-filter: blur(16px); }
+.chart-box { width: 100%; height: 360px; }
+@media (max-width: 768px) { .chart-box { height: 280px; } }
 </style>

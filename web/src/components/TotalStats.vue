@@ -96,20 +96,20 @@ onMounted(() => {
 <style scoped>
 .stats-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 80px 24px; position: relative;
-  background: linear-gradient(160deg, #1a2e1a 0%, #0d1117 60%);
+  padding: 60px 24px; position: relative;
+  background: linear-gradient(180deg, #0d1117 0%, #122218 100%);
 }
-.section-content { max-width: 700px; width: 100%; text-align: center; }
+.section-content { max-width: 680px; width: 100%; text-align: center; }
 .big-number {
-  font-size: 6rem; font-weight: 900;
+  font-size: 5.5rem; font-weight: 900;
   background: linear-gradient(135deg, var(--accent), var(--accent-warm));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   line-height: 1.1; font-variant-numeric: tabular-nums;
 }
 .stats-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
 }
-.stat-item { padding: 28px 16px; text-align: center; }
+.stat-item { padding: 24px 14px; text-align: center; }
 .stat-num {
   font-size: 2.5rem; font-weight: 800; font-variant-numeric: tabular-nums;
   line-height: 1.2;
@@ -125,8 +125,8 @@ onMounted(() => {
 .stat-label { font-size: 0.85rem; color: var(--text-dim); margin-top: 4px; }
 
 @media (max-width: 768px) {
-  .big-number { font-size: 3.5rem; }
-  .stat-num { font-size: 1.8rem; }
-  .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+  .big-number { font-size: 3.2rem; }
+  .stat-num { font-size: 1.6rem; }
+  .stats-grid { grid-template-columns: 1fr; gap: 10px; }
 }
 </style>

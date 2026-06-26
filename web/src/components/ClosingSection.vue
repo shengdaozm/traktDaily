@@ -68,8 +68,8 @@ onMounted(() => {
 <style scoped>
 .closing-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 80px 24px 40px; position: relative;
-  background: linear-gradient(160deg, #0d1117 0%, #1a1a2e 50%, #0d1117 100%);
+  padding: 60px 24px 40px; position: relative;
+  background: linear-gradient(180deg, #0d1117 0%, #14122a 100%);
 }
 .section-content { max-width: 600px; width: 100%; text-align: center; }
 .closing-content { opacity: 0; transform: translateY(30px); transition: opacity 1s ease, transform 1s ease; }

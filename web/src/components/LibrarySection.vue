@@ -122,11 +122,11 @@ onMounted(() => {
 <style scoped>
 .library-section {
   min-height: 100vh; display: flex; align-items: flex-start; justify-content: center;
-  padding: 100px 24px;
-  background: linear-gradient(160deg, #0d1117 0%, #1a2e1a 100%);
+  padding: 80px 24px;
+  background: linear-gradient(180deg, #0d1117 0%, #122218 100%);
 }
 .section-content { max-width: 900px; width: 100%; }
-.section-label { font-size: 0.9rem; color: var(--accent); text-align: center; margin-bottom: 16px; font-weight: 600; }
+.section-label { font-size: 0.85rem; color: var(--accent); text-align: center; margin-bottom: 12px; font-weight: 600; }
 
 .controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; }

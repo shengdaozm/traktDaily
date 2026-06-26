@@ -99,20 +99,20 @@ onMounted(() => {
 <style scoped>
 .heatmap-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 80px 24px;
-  background: linear-gradient(160deg, #0d1117 0%, #161b22 100%);
+  padding: 60px 24px;
+  background: linear-gradient(180deg, #0d1117 0%, #121a2a 100%);
 }
 .section-content { max-width: 900px; width: 100%; }
-.section-label { font-size: 0.9rem; color: var(--accent); text-align: center; margin-bottom: 16px; font-weight: 600; }
-.year-select { text-align: center; margin-bottom: 20px; }
+.section-label { font-size: 0.85rem; color: var(--accent); text-align: center; margin-bottom: 12px; font-weight: 600; }
+.year-select { text-align: center; margin-bottom: 16px; }
 .year-select select {
-  padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
-  background: var(--surface); color: var(--text-bright); font-size: 0.9rem; font-weight: 600;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-bright); font-size: 0.85rem; font-weight: 600;
   cursor: pointer; outline: none; appearance: none; -webkit-appearance: none;
 }
 .year-select select option { background: var(--surface-solid); }
-.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; backdrop-filter: blur(20px); }
-.chart-box { width: 100%; height: 220px; }
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; backdrop-filter: blur(16px); }
+.chart-box { width: 100%; height: 200px; }
 .heatmap-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 8px; font-size: 0.75rem; color: var(--text-dim); }
 .heatmap-legend span { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
 .lv0 { background: rgba(255,255,255,0.05); }

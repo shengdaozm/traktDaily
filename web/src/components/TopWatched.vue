@@ -65,11 +65,11 @@ onMounted(() => {
 <style scoped>
 .top-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 80px 24px;
-  background: linear-gradient(160deg, #1a1a2e 0%, #0d1117 60%);
+  padding: 60px 24px;
+  background: linear-gradient(180deg, #0d1117 0%, #14122a 100%);
 }
 .section-content { max-width: 900px; width: 100%; }
-.section-label { font-size: 0.9rem; color: var(--accent); text-align: center; margin-bottom: 16px; font-weight: 600; }
+.section-label { font-size: 0.85rem; color: var(--accent); text-align: center; margin-bottom: 12px; font-weight: 600; }
 
 .poster-scroll {
   display: flex; gap: 16px; overflow-x: auto; padding: 20px 0;
