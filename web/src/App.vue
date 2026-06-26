@@ -1,5 +1,5 @@
 <script setup>
-import { ref, provide, onMounted, onUnmounted } from 'vue'
+import { ref, provide, onMounted, onUnmounted, nextTick } from 'vue'
 import { useTraktData } from '@/composables/useTraktData'
 import HeroHeader from '@/components/HeroHeader.vue'
 import StatsSection from '@/components/StatsSection.vue'
@@ -49,6 +49,14 @@ function handleResize() {
   resizeCallbacks.value.forEach(fn => fn?.())
 }
 
+function onTabChange() {
+  nextTick(() => {
+    setTimeout(() => {
+      resizeCallbacks.value.forEach(fn => fn?.())
+    }, 300)
+  })
+}
+
 onMounted(() => window.addEventListener('resize', handleResize))
 onUnmounted(() => window.removeEventListener('resize', handleResize))
 </script>
@@ -72,9 +80,9 @@ onUnmounted(() => window.removeEventListener('resize', handleResize))
     <template v-else>
       <StatsSection :stats="totalStats" :monthly-stats="monthlyStats" />
 
-      <TabNav v-model="activeTab" :tabs="tabs" />
+      <TabNav v-model="activeTab" :tabs="tabs" @change="onTabChange" />
 
-      <Transition name="tab" mode="out-in">
+      <Transition name="tab" mode="out-in" @after-enter="onTabChange">
         <OverviewTab v-if="activeTab === 'overview'" />
         <HeatmapTab v-else-if="activeTab === 'heatmap'" />
         <ChartsTab v-else-if="activeTab === 'charts'" />

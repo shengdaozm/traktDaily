@@ -6,7 +6,7 @@ import YearlyCompare from '@/components/YearlyCompare.vue'
 
 <template>
   <div>
-    <div class="charts-grid reveal">
+    <div class="charts-grid animate-in" style="animation-delay: 0s">
       <div class="chart-card">
         <h3>媒体类型分布</h3>
         <TypePieChart />
@@ -16,7 +16,7 @@ import YearlyCompare from '@/components/YearlyCompare.vue'
         <RatingChart />
       </div>
     </div>
-    <div class="card reveal">
+    <div class="card animate-in" style="animation-delay: 0.1s">
       <h2><span class="icon">📅</span> 年度数据对比</h2>
       <YearlyCompare />
     </div>
@@ -43,8 +43,7 @@ import YearlyCompare from '@/components/YearlyCompare.vue'
   margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
 }
 .card h2 .icon { font-size: 1.2rem; }
-.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
-.reveal.visible { opacity: 1; transform: translateY(0); }
+.animate-in { animation: fadeInUp 0.5s ease both; }
 
 @media (max-width: 768px) {
   .charts-grid { grid-template-columns: 1fr; }

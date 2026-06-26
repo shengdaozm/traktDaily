@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, computed, onMounted } from 'vue'
+import { inject, ref, computed } from 'vue'
 import { traktUrl, translateGenre, cleanShowTitle } from '@/utils/genres'
 import { relativeDate, formatMinutes } from '@/utils/format'
 
@@ -69,6 +69,12 @@ function loadMore() {
   visibleCount.value += 24
 }
 
+function onImgError(e) {
+  e.target.style.display = 'none'
+  const sib = e.target.nextElementSibling
+  if (sib) sib.style.display = 'flex'
+}
+
 const showCounts = computed(() => {
   const lib = library.value
   return {
@@ -76,17 +82,6 @@ const showCounts = computed(() => {
     movie: lib.filter(m => m.media_type === 'movie').length,
     episode: lib.filter(m => m.media_type === 'episode').length,
   }
-})
-
-const revealObserver = ref(null)
-onMounted(() => {
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible') })
-  }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' })
-  setTimeout(() => {
-    document.querySelectorAll('.reveal').forEach(el => obs.observe(el))
-  }, 100)
-  revealObserver.value = obs
 })
 </script>
 
@@ -114,15 +109,16 @@ onMounted(() => {
       </div>
     </div>
 
-    <TransitionGroup name="card-list" tag="div" class="library-grid">
+    <div class="library-grid">
       <a
-        v-for="m in displayed" :key="m.key"
-        :href="traktUrl(m.item, mediaMap)" target="_blank" class="lib-card reveal"
+        v-for="(m, i) in displayed" :key="m.key"
+        :href="traktUrl(m.item, mediaMap)" target="_blank"
+        class="lib-card animate-in"
+        :style="{ animationDelay: (i % 24) * 0.02 + 's' }"
       >
         <div class="lib-poster-wrapper">
           <img v-if="m.poster_url" class="lib-poster"
-            :src="m.poster_url" alt="" loading="lazy"
-            @error="$event.target.style.display='none'; $event.target.nextElementSibling.style.display='flex'"
+            :src="m.poster_url" alt="" loading="lazy" @error="onImgError"
           />
           <div v-if="!m.poster_url" class="lib-poster placeholder">
             {{ m.media_type === 'movie' ? '🎥' : '📺' }}
@@ -141,7 +137,7 @@ onMounted(() => {
             </span>
             <span v-if="m.year">{{ m.year }}</span>
           </div>
-          <div class="lib-genres" v-if="m.genres.length">
+          <div class="lib-genres" v-if="m.genres && m.genres.length">
             <span v-for="g in m.genres.slice(0, 3)" :key="g" class="genre-tag">
               {{ translateGenre(g) }}
             </span>
@@ -153,7 +149,7 @@ onMounted(() => {
           </div>
         </div>
       </a>
-    </TransitionGroup>
+    </div>
 
     <div v-if="hasMore" class="load-more">
       <button @click="loadMore">加载更多（{{ filtered.length - visibleCount }} 个）</button>
@@ -188,8 +184,7 @@ onMounted(() => {
   padding: 8px 14px; border: 1px solid var(--border); border-radius: 20px;
   background: var(--surface); color: var(--text); font-size: 0.85rem;
   cursor: pointer; outline: none; transition: all var(--transition);
-  appearance: none; -webkit-appearance: none;
-  padding-right: 28px;
+  appearance: none; -webkit-appearance: none; padding-right: 28px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 10px center;
 }
@@ -201,34 +196,42 @@ onMounted(() => {
 }
 .lib-card {
   text-decoration: none; transition: transform var(--transition);
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; height: 100%;
 }
-.lib-card:hover { transform: translateY(-6px); }
-.lib-poster-wrapper { position: relative; }
+.lib-card:hover { transform: translateY(-6px); text-decoration: none; }
+
+.lib-poster-wrapper { position: relative; width: 100%; aspect-ratio: 2/3; }
 .lib-poster {
-  width: 100%; aspect-ratio: 2/3; border-radius: var(--radius-sm);
+  width: 100%; height: 100%; border-radius: var(--radius-sm);
   object-fit: cover; background: rgba(48,54,61,0.4);
   box-shadow: var(--shadow); border: 1px solid var(--border);
   transition: box-shadow var(--transition), border-color var(--transition);
+  position: absolute; top: 0; left: 0;
 }
 .lib-poster.placeholder {
   display: flex; align-items: center; justify-content: center;
   font-size: 2.5rem; color: var(--muted);
 }
 .lib-card:hover .lib-poster { box-shadow: var(--shadow-hover); border-color: var(--border-bright); }
+
 .lib-count-badge {
   position: absolute; bottom: 8px; right: 8px;
   padding: 3px 8px; border-radius: 12px;
   background: rgba(10, 14, 20, 0.85); backdrop-filter: blur(4px);
-  font-size: 0.72rem; font-weight: 700; color: var(--accent);
+  font-size: 0.72rem; font-weight: 700; color: var(--accent); z-index: 1;
 }
 .lib-rating-badge {
   position: absolute; top: 8px; left: 8px;
   padding: 3px 8px; border-radius: 12px;
   background: rgba(10, 14, 20, 0.85); backdrop-filter: blur(4px);
-  font-size: 0.72rem; font-weight: 700; color: var(--accent);
+  font-size: 0.72rem; font-weight: 700; color: var(--accent); z-index: 1;
 }
-.lib-info { padding: 10px 4px 0; }
+
+.lib-info {
+  padding: 10px 4px 0;
+  display: flex; flex-direction: column; gap: 4px;
+  flex: 1;
+}
 .lib-title {
   font-size: 0.86rem; font-weight: 600; color: var(--text-bright);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -237,23 +240,22 @@ onMounted(() => {
 .lib-card:hover .lib-title { color: var(--primary); }
 .lib-meta {
   display: flex; align-items: center; gap: 6px;
-  font-size: 0.76rem; color: var(--muted); margin-top: 3px;
+  font-size: 0.76rem; color: var(--muted);
 }
 .lib-type {
   padding: 1px 5px; border-radius: 4px; font-size: 0.68rem; font-weight: 600;
 }
 .lib-type.movie { background: rgba(88,166,255,0.15); color: var(--primary); }
 .lib-type.episode { background: rgba(139,92,246,0.15); color: var(--purple); }
-.lib-genres {
-  display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap;
-}
+.lib-genres { display: flex; gap: 4px; flex-wrap: wrap; }
 .genre-tag {
   font-size: 0.68rem; padding: 1px 6px; border-radius: 8px;
   background: rgba(48,54,61,0.4); color: var(--muted);
 }
 .lib-stats {
-  font-size: 0.72rem; color: var(--muted); margin-top: 6px;
+  font-size: 0.72rem; color: var(--muted);
   display: flex; align-items: center; gap: 4px;
+  margin-top: auto;
 }
 
 .load-more { text-align: center; margin-top: 32px; }
@@ -267,11 +269,7 @@ onMounted(() => {
   background: rgba(88,166,255,0.08);
 }
 
-.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
-.reveal.visible { opacity: 1; transform: translateY(0); }
-
-.card-list-enter-active { transition: all 0.4s ease; }
-.card-list-enter-from { opacity: 0; transform: translateY(20px); }
+.animate-in { animation: fadeInUp 0.4s ease both; }
 
 @media (max-width: 1024px) {
   .library-grid { grid-template-columns: repeat(3, 1fr); }

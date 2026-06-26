@@ -1,15 +1,17 @@
 <script setup>
-import { inject, computed } from 'vue'
+import { inject, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useECharts, TOOLTIP_STYLE } from '@/composables/useEcharts'
 
 const monthlyStats = inject('monthlyStats')
+const registerResize = inject('registerResize')
+const unregisterResize = inject('unregisterResize')
 
 const recent12 = computed(() => {
   const sorted = [...(monthlyStats.value || [])].reverse()
   return sorted.slice(-12)
 })
 
-const { chartRef } = useECharts(() => {
+const { chartRef, resize } = useECharts(() => {
   const data = recent12.value
   if (!data.length) return null
   return {
@@ -78,6 +80,9 @@ const { chartRef } = useECharts(() => {
     animationDuration: 1200, animationEasing: 'cubicOut',
   }
 }, [recent12])
+
+onMounted(() => registerResize?.(resize))
+onBeforeUnmount(() => unregisterResize?.(resize))
 </script>
 
 <template>

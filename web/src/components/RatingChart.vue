@@ -1,8 +1,10 @@
 <script setup>
-import { inject, computed } from 'vue'
+import { inject, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useECharts, TOOLTIP_STYLE } from '@/composables/useEcharts'
 
 const mediaList = inject('mediaList')
+const registerResize = inject('registerResize')
+const unregisterResize = inject('unregisterResize')
 
 const buckets = computed(() => {
   const ratings = (mediaList.value || []).map(m => m.rating).filter(r => r != null).map(Number)
@@ -13,7 +15,7 @@ const buckets = computed(() => {
 
 const labels = ['0-1', '1-2', '2-3', '3-4', '4-5', '5-6', '6-7', '7-8', '8-9', '9-10']
 
-const { chartRef } = useECharts(() => {
+const { chartRef, resize } = useECharts(() => {
   const data = buckets.value
   return {
     tooltip: { ...TOOLTIP_STYLE, trigger: 'axis', axisPointer: { type: 'shadow' } },
@@ -47,6 +49,9 @@ const { chartRef } = useECharts(() => {
     animationDuration: 1000, animationEasing: 'elasticOut',
   }
 }, [buckets])
+
+onMounted(() => registerResize?.(resize))
+onBeforeUnmount(() => unregisterResize?.(resize))
 </script>
 
 <template>

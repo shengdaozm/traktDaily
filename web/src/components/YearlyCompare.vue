@@ -1,8 +1,10 @@
 <script setup>
-import { inject, computed } from 'vue'
+import { inject, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useECharts, TOOLTIP_STYLE } from '@/composables/useEcharts'
 
 const monthlyStats = inject('monthlyStats')
+const registerResize = inject('registerResize')
+const unregisterResize = inject('unregisterResize')
 
 const yearData = computed(() => {
   const stats = monthlyStats.value || []
@@ -19,7 +21,7 @@ const yearData = computed(() => {
   return { years, data: years.map(y => yearMap[y]) }
 })
 
-const { chartRef } = useECharts(() => {
+const { chartRef, resize } = useECharts(() => {
   const { years, data } = yearData.value
   if (!years.length) return null
   return {
@@ -87,6 +89,9 @@ const { chartRef } = useECharts(() => {
     animationDuration: 1200, animationEasing: 'cubicOut',
   }
 }, [yearData])
+
+onMounted(() => registerResize?.(resize))
+onBeforeUnmount(() => unregisterResize?.(resize))
 </script>
 
 <template>

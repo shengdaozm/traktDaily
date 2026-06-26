@@ -1,15 +1,17 @@
 <script setup>
-import { inject, computed } from 'vue'
+import { inject, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useECharts, TOOLTIP_STYLE } from '@/composables/useEcharts'
 
 const summary = inject('summary')
+const registerResize = inject('registerResize')
+const unregisterResize = inject('unregisterResize')
 
 const data = computed(() => ({
   movies: summary.value?.total_movies || 0,
   episodes: summary.value?.total_episodes || 0,
 }))
 
-const { chartRef } = useECharts(() => {
+const { chartRef, resize } = useECharts(() => {
   const d = data.value
   return {
     tooltip: { ...TOOLTIP_STYLE, trigger: 'item', formatter: '{b}: {c} ({d}%)' },
@@ -36,6 +38,9 @@ const { chartRef } = useECharts(() => {
     animationDuration: 1200, animationEasing: 'elasticOut',
   }
 }, [data])
+
+onMounted(() => registerResize?.(resize))
+onBeforeUnmount(() => unregisterResize?.(resize))
 </script>
 
 <template>

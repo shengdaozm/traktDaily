@@ -1,9 +1,11 @@
 <script setup>
-import { inject, computed } from 'vue'
+import { inject, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useECharts, TOOLTIP_STYLE } from '@/composables/useEcharts'
 import { GENRE_COLORS, translateGenre } from '@/utils/genres'
 
 const dailyGenreStats = inject('dailyGenreStats')
+const registerResize = inject('registerResize')
+const unregisterResize = inject('unregisterResize')
 
 const genreData = computed(() => {
   const stats = dailyGenreStats.value || []
@@ -53,14 +55,18 @@ function makePieOption(data, values, total, unit) {
 const totalCounts = computed(() => genreData.value.counts.reduce((a, b) => a + b, 0))
 const totalMinutes = computed(() => genreData.value.minutes.reduce((a, b) => a + b, 0))
 
-const { chartRef: chartRef1 } = useECharts(
+const { chartRef: chartRef1, resize: resize1 } = useECharts(
   () => makePieOption(genreData.value, genreData.value.counts, totalCounts.value, '集'),
   [genreData]
 )
-const { chartRef: chartRef2 } = useECharts(
+const { chartRef: chartRef2, resize: resize2 } = useECharts(
   () => makePieOption(genreData.value, genreData.value.minutes, totalMinutes.value, '小时'),
   [genreData]
 )
+
+function resizeAll() { resize1(); resize2() }
+onMounted(() => registerResize?.(resizeAll))
+onBeforeUnmount(() => unregisterResize?.(resizeAll))
 </script>
 
 <template>

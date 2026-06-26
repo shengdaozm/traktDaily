@@ -1,8 +1,16 @@
 <script setup>
+const emit = defineEmits(['change'])
 defineProps({
   tabs: { type: Array, required: true },
 })
 const model = defineModel({ type: String })
+
+function select(key) {
+  if (model.value !== key) {
+    model.value = key
+    emit('change', key)
+  }
+}
 </script>
 
 <template>
@@ -10,7 +18,7 @@ const model = defineModel({ type: String })
     <button
       v-for="tab in tabs" :key="tab.key"
       class="tab-btn" :class="{ active: model === tab.key }"
-      @click="model = tab.key"
+      @click="select(tab.key)"
     >
       {{ tab.icon }} {{ tab.label }}
     </button>

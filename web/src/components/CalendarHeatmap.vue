@@ -1,8 +1,12 @@
 <script setup>
-import { inject, ref, computed, watch } from 'vue'
+import { inject, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import * as echarts from 'echarts'
 import { useECharts, TOOLTIP_STYLE } from '@/composables/useEcharts'
 
 const dailyGenreStats = inject('dailyGenreStats')
+const registerResize = inject('registerResize')
+const unregisterResize = inject('unregisterResize')
+
 const selectedYear = ref(new Date().getFullYear())
 
 const availableYears = computed(() => {
@@ -28,7 +32,7 @@ const chartData = computed(() => {
   return Object.entries(dailyMap.value).map(([date, count]) => [date, count])
 })
 
-const { chartRef, render } = useECharts(() => {
+const { chartRef, render, resize } = useECharts(() => {
   const data = chartData.value
   const year = selectedYear.value
   const maxVal = Math.max(50, ...data.map(d => d[1]))
@@ -61,6 +65,9 @@ const { chartRef, render } = useECharts(() => {
 }, [chartData, selectedYear])
 
 watch(selectedYear, () => render())
+
+onMounted(() => registerResize?.(resize))
+onBeforeUnmount(() => unregisterResize?.(resize))
 </script>
 
 <template>

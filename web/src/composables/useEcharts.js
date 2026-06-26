@@ -1,10 +1,18 @@
-import { ref, onMounted, onBeforeUnmount, watch, shallowRef, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, onActivated, watch, shallowRef, nextTick } from 'vue'
 import * as echarts from 'echarts'
 
 export function useECharts(getOptionFn, watchSources = []) {
   const chartRef = ref(null)
   const chart = shallowRef(null)
   const ready = ref(false)
+
+  function initChart() {
+    if (chart.value || !chartRef.value) return
+    if (chartRef.value.offsetWidth === 0 || chartRef.value.offsetHeight === 0) return
+    chart.value = echarts.init(chartRef.value, null, { renderer: 'canvas' })
+    ready.value = true
+    render()
+  }
 
   function render() {
     if (!chart.value) return
@@ -13,16 +21,30 @@ export function useECharts(getOptionFn, watchSources = []) {
   }
 
   function resize() {
-    chart.value?.resize()
+    if (chart.value) {
+      chart.value.resize()
+    } else {
+      initChart()
+    }
   }
 
-  onMounted(async () => {
-    await nextTick()
-    if (chartRef.value) {
-      chart.value = echarts.init(chartRef.value, null, { renderer: 'canvas' })
-      ready.value = true
-      render()
-    }
+  function tryInit() {
+    nextTick(() => {
+      setTimeout(() => {
+        initChart()
+        if (!chart.value) {
+          setTimeout(initChart, 200)
+        }
+      }, 50)
+    })
+  }
+
+  onMounted(() => {
+    tryInit()
+  })
+
+  onActivated(() => {
+    tryInit()
   })
 
   onBeforeUnmount(() => {
@@ -31,17 +53,12 @@ export function useECharts(getOptionFn, watchSources = []) {
   })
 
   watch(watchSources, () => {
-    if (ready.value) render()
-  }, { deep: true })
-
-  watch(chartRef, async (el) => {
-    if (el && !chart.value) {
-      await nextTick()
-      chart.value = echarts.init(el, null, { renderer: 'canvas' })
-      ready.value = true
+    if (ready.value) {
       render()
+    } else {
+      tryInit()
     }
-  })
+  }, { deep: true })
 
   return { chartRef, ready, render, resize }
 }
