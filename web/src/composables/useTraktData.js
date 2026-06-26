@@ -11,24 +11,32 @@ const error = ref(null)
 
 let loaded = false
 
+async function safeFetch(url) {
+  try {
+    const resp = await fetch(url)
+    if (!resp.ok) return null
+    const ct = resp.headers.get('content-type') || ''
+    if (!ct.includes('application/json')) return null
+    return resp
+  } catch {
+    return null
+  }
+}
+
 export function useTraktData() {
   async function loadData() {
     loading.value = true
     error.value = null
     try {
       const [sumResp, mediaResp, topResp, metaResp, personaResp] = await Promise.all([
-        fetch('data/summary.json').catch(() => null),
-        fetch('data/media.json').catch(() => null),
-        fetch('data/top_media.json').catch(() => null),
-        fetch('data/recent_meta.json').catch(() => null),
-        fetch('data/persona.json').catch(() => null),
+        safeFetch('data/summary.json'),
+        safeFetch('data/media.json'),
+        safeFetch('data/top_media.json'),
+        safeFetch('data/recent_meta.json'),
+        safeFetch('data/persona.json'),
       ])
       if (!sumResp) throw new Error('核心数据文件 (summary.json) 加载失败，请先运行数据抓取')
-      try {
-        summary.value = await sumResp.json()
-      } catch {
-        throw new Error('核心数据文件 (summary.json) 格式错误，请重新运行数据抓取')
-      }
+      summary.value = await sumResp.json()
       mediaList.value = mediaResp ? await mediaResp.json() : []
       topMedia.value = topResp ? await topResp.json() : []
       if (metaResp) recentMeta.value = await metaResp.json()
@@ -50,9 +58,9 @@ export function useTraktData() {
     if (recentPageCache.value.has(page)) {
       return recentPageCache.value.get(page)
     }
+    const resp = await safeFetch(`data/recent_${page}.json`)
+    if (!resp) return []
     try {
-      const resp = await fetch(`data/recent_${page}.json`)
-      if (!resp.ok) return []
       const data = await resp.json()
       recentPageCache.value.set(page, data)
       return data
