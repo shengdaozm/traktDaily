@@ -44,13 +44,7 @@ jobs:
         run: |
           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/shengdaozm/traktData.git /tmp/data-repo
           mkdir -p web/public/data
-          # 优先拉取新路径 web/public/data/
           cp -r /tmp/data-repo/web/public/data/. web/public/data/ 2>/dev/null || true
-          # 兼容旧路径 web/data/（如果新路径为空）
-          if [ -z "$(ls -A web/public/data/ 2>/dev/null)" ]; then
-            echo "新路径为空，尝试旧路径 web/data/..."
-            cp -r /tmp/data-repo/web/data/. web/public/data/ 2>/dev/null || true
-          fi
           echo "已拉取前端数据文件："
           ls -la web/public/data/ || true
           if [ -z "$(ls -A web/public/data/ 2>/dev/null)" ]; then
