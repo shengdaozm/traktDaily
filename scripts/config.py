@@ -34,4 +34,4 @@ DB_PATH = os.path.join(PROJECT_ROOT, "data", "trakt.db")
 # 报告 JSON 输出目录
 REPORTS_DIR = os.path.join(PROJECT_ROOT, "data", "reports")
 # 前端 JSON 数据目录
-WEB_DATA_DIR = os.path.join(PROJECT_ROOT, "web", "data")
+WEB_DATA_DIR = os.path.join(PROJECT_ROOT, "web", "public", "data")

@@ -28,5 +28,9 @@ data/*.db-journal
 data/*.db-wal
 data/*.db-shm
 
-# 前端生成数据（deploy 时由 render.py 生成）
-web/data/
+# 前端 JSON 数据需要提交到公开仓库（GitHub Pages 部署依赖）
+# 同时备份到私有仓库，此处不再忽略
+
+# 前端构建依赖
+web/node_modules/
+web/dist/

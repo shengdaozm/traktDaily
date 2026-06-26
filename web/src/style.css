@@ -1,0 +1,77 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0e14;
+  --surface: rgba(22, 27, 36, 0.85);
+  --surface-hover: rgba(30, 36, 46, 0.9);
+  --surface-solid: #161b24;
+  --border: rgba(48, 54, 61, 0.6);
+  --border-bright: rgba(88, 166, 255, 0.3);
+  --primary: #58a6ff;
+  --primary-glow: rgba(88, 166, 255, 0.25);
+  --accent: #f0c040;
+  --accent-glow: rgba(240, 192, 64, 0.3);
+  --success: #3fb950;
+  --purple: #8b5cf6;
+  --danger: #f97583;
+  --text: #c9d1d9;
+  --text-bright: #e6edf3;
+  --muted: #8b949e;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(88, 166, 255, 0.08) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 50% at 80% 80%, rgba(240, 192, 64, 0.04) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 40% at 20% 60%, rgba(139, 92, 246, 0.05) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+a { color: var(--primary); text-decoration: none; transition: color var(--transition); }
+a:hover { color: var(--text-bright); text-decoration: underline; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(48,54,61,0.3) 25%, rgba(48,54,61,0.5) 50%, rgba(48,54,61,0.3) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar { width: 8px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(48,54,61,0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(88,166,255,0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(88,166,255,0.5); }
+
+@media (max-width: 768px) {
+  :root { --radius: 12px; }
+}
