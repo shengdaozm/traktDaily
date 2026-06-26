@@ -193,23 +193,29 @@ const showCounts = computed(() => {
 
 .library-grid {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+  align-items: stretch;
 }
 .lib-card {
   text-decoration: none; transition: transform var(--transition);
-  display: flex; flex-direction: column; height: 100%;
+  display: flex; flex-direction: column;
 }
 .lib-card:hover { transform: translateY(-6px); text-decoration: none; }
 
-.lib-poster-wrapper { position: relative; width: 100%; aspect-ratio: 2/3; }
+.lib-poster-wrapper {
+  position: relative; width: 100%;
+  padding-top: 150%;
+  border-radius: var(--radius-sm); overflow: hidden;
+}
 .lib-poster {
-  width: 100%; height: 100%; border-radius: var(--radius-sm);
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  border-radius: var(--radius-sm);
   object-fit: cover; background: rgba(48,54,61,0.4);
   box-shadow: var(--shadow); border: 1px solid var(--border);
   transition: box-shadow var(--transition), border-color var(--transition);
-  position: absolute; top: 0; left: 0; display: block;
+  display: flex; align-items: center; justify-content: center;
 }
 .lib-poster.placeholder {
-  display: flex; align-items: center; justify-content: center;
   font-size: 2.5rem; color: var(--muted);
 }
 .lib-card:hover .lib-poster { box-shadow: var(--shadow-hover); border-color: var(--border-bright); }
