@@ -271,11 +271,12 @@ def get_top_media(limit: int = 10) -> list[dict]:
             p.genres,
             COUNT(*) AS watch_count,
             SUM(p.runtime) AS total_minutes,
+            MAX(p.watched_at_local) AS last_watched,
             m.poster_url, m.rating, m.overview
         FROM plays p
         LEFT JOIN media m ON m.trakt_id = p.media_trakt_id
         GROUP BY p.media_trakt_id
-        ORDER BY watch_count DESC
+        ORDER BY last_watched DESC
         LIMIT ?
     """, (limit,)).fetchall()
     conn.close()

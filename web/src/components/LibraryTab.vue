@@ -7,7 +7,7 @@ const topMedia = inject('topMedia')
 const mediaMap = inject('mediaMap')
 
 const filter = ref('all')
-const sortBy = ref('watched')
+const sortBy = ref('recent')
 const visibleCount = ref(24)
 
 const library = computed(() => {
@@ -27,7 +27,7 @@ const library = computed(() => {
       overview: media?.overview,
       count: m.watch_count || 0,
       total_minutes: m.total_minutes || 0,
-      last_watched: '',
+      last_watched: m.last_watched || '',
       item: m,
       media,
     }
@@ -40,8 +40,8 @@ const filtered = computed(() => {
     list = list.filter(m => m.media_type === filter.value)
   }
   const sorted = [...list]
-  if (sortBy.value === 'watched') {
-    sorted.sort((a, b) => b.count - a.count)
+  if (sortBy.value === 'recent') {
+    sorted.sort((a, b) => (b.last_watched || '').localeCompare(a.last_watched || ''))
   } else if (sortBy.value === 'rating') {
     sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0))
   } else if (sortBy.value === 'time') {
@@ -89,7 +89,7 @@ const showCounts = computed(() => {
       </div>
       <div class="sort-group">
         <select v-model="sortBy">
-          <option value="watched">观看次数最多</option>
+          <option value="recent">最近观看</option>
           <option value="time">观看时长最长</option>
           <option value="rating">评分最高</option>
         </select>
@@ -132,7 +132,7 @@ const showCounts = computed(() => {
           <div class="lib-stats">
             <span>⏱️ {{ formatMinutes(m.total_minutes) }}</span>
             <span>·</span>
-            <span>{{ m.count }} 次观看</span>
+            <span>{{ relativeDate(m.last_watched) }}</span>
           </div>
         </div>
       </a>
