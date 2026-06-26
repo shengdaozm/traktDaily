@@ -1,157 +1,315 @@
-# 数据私有化改造计划
+# 观影人格画像 — 开发计划
 
-## 目标
+## 核心理念
 
-将 `data/trakt.db` 从公开仓库迁移到私有仓库，流程和触发仍在公开仓库，数据存储到私有仓库。
+不是"你看了什么"，而是"你是什么样的人"。通过观影行为反推一个人的生活状态、性格特征、情绪模式。
 
-## 当前架构
+传统统计回答"我喜欢什么类型的影视"，人格画像回答"影视下的我是什么样的人"。
+
+---
+
+## 一、可分析的维度
+
+从现有数据可以挖掘出以下层面：
+
+### 1. 时间行为画像（反映生活作息）
+
+- 小时分布：从 `watched_at_local` 提取，你是"深夜追剧人"还是"午后休闲型"
+- 星期分布：工作日 vs 周末比例，反映生活节奏
+- Binge 指数：连续观看同一剧集（间隔 <2h）的频率，反映沉浸度
+- 观影频率波动：稳定型 vs 脉冲型（某段时间集中看，某段时间空白）
+
+### 2. 内容偏好深度（反映性格取向）
+
+- 类型组合模式：不只是"喜欢科幻"，而是"科幻+悬疑"（理性探索型）vs"喜剧+爱情"（情感体验型）
+- 精品度：你看的作品平均评分，是"精品猎人"还是"来者不拒"
+- 评分差异：你给的分 vs 大众评分的偏差，反映你更宽容还是更挑剔
+- 国别/语言偏好：美剧/日漫/韩剧/国产的比例，反映文化取向
+- 新鲜度：首播年份分布，追新剧 vs 看经典
+
+### 3. 观影行为模式（反映性格特质）
+
+- 追剧速度：看完一季到开下一季的间隔
+- 广度 vs 深度：看的作品种类多但浅，还是少但深（重复观看同一部）
+- 时长偏好：长剧集（20+集）vs 短剧集 vs 电影，反映耐心/沉浸度
+- 季节性：春夏秋冬的观影量和类型变化，是否有情绪季节性
+
+---
+
+## 二、人格标签体系
+
+基于以上分析，用规则引擎自动生成标签：
+
+| 标签 | 触发条件 | 描述 |
+|---|---|---|
+| 🌙 深夜追剧人 | 22:00-02:00 观影占比 >40% | "夜深了，你的故事才刚开始" |
+| 🎯 精品猎人 | 平均评分 >7.5 | "你的时间只留给好故事" |
+| 📚 杂食观众 | 类型分布均匀（熵值高） | "什么类型都看，什么故事都体验" |
+| 🔥 一口气追完党 | binge 指数 >0.6 | "开了头就停不下来" |
+| 🌍 国际化口味 | 非英语非中文作品 >30% | "你的视界没有国界" |
+| 🧊 冷门挖掘者 | 低投票数作品占比高 | "别人追的热门你不在乎" |
+| 📅 周末型 | 周末观影占比 >65% | "工作日攒着，周末一次性释放" |
+| 🔄 重温型 | 同一作品多次观看 | "好故事值得反复品味" |
+| 📏 长篇爱好者 | 平均集数 >16 | "你享受长线叙事的沉浸感" |
+| ⚡ 脉冲型 | 月度观影标准差 >均值 | "你追剧像发洪水，来一波停一波" |
+
+---
+
+## 三、观影性格雷达图
+
+8 个维度构建雷达图，直观展示"观影 DNA"：
 
 ```
-公开仓库 (traktDaily)
-├── fetch.yml          → 抓取数据 → 写入 data/trakt.db → commit & push 到公开仓库
-├── deploy.yml         → 读 data/trakt.db → render.py 生成 web/data/*.json → GitHub Pages
-└── data/trakt.db      → 被提交到公开仓库 ❌
+        沉浸度
+          |
+  国际化 ———— 精品度
+   /              \
+广度               深度
+   \              /
+  夜猫 ———— 新鲜度
+          |
+        时长偏好
 ```
 
-## 目标架构
+每个维度 0-100 标准化评分，生成独特的人格轮廓。
+
+---
+
+## 四、大模型人格评判（核心特性）
+
+### 方案
+
+在 `fetch.yml` 工作流中，数据抓取完成后，调用大模型 API 对观影数据进行深度人格分析。
+
+### 流程
 
 ```
-公开仓库 (traktDaily)                                    私有仓库 (traktDaily-data)
-┌──────────────────────────────────────────┐         ┌──────────────────────────┐
-│ fetch.yml                                │         │                          │
-│  ① git clone 私有仓库 → 拿到            │         │  data/trakt.db           │
-│     data/trakt.db（增量基准）             │         │  data/reports/           │
-│  ② python fetch.py → 增量抓取           │         │                          │
-│  ③ git push data/trakt.db → 私有仓库    │  ──>    │  🔒 完全私有             │
-│  ④ python render.py → web/data/*.json   │         │                          │
-│  ⑤ git push web/data/*.json → 公开仓库  │         └──────────────────────────┘
-│                                          │
-│ deploy.yml（不变）                        │
-│  → 部署 web/ 到 GitHub Pages             │
-└──────────────────────────────────────────┘
+render.py 生成统计数据
+    │
+    ▼
+persona.py 收集分析数据（时间分布、类型偏好、评分习惯等）
+    │
+    ▼
+调用大模型 API（GPT-4o / Claude / GLM）
+    │  Prompt: 结构化观影数据 + 人格分析指令
+    │  返回: JSON 格式的人格画像
+    ▼
+输出 persona.json → 前端展示
 ```
 
-## 数据流
+### 大模型分析产出
+
+大模型不只做规则匹配，而是基于全量数据生成**个性化、有温度的人格评判**：
+
+```json
+{
+  "archetype": "深夜故事旅人",
+  "archetype_description": "你是一个在夜色中寻找故事的人。白天属于现实，夜晚属于想象。",
+  "tags": ["🌙 深夜追剧人", "🎯 精品猎人", "🔥 一口气追完党"],
+  "radar": {
+    "immersion": 82,
+    "quality": 78,
+    "diversity": 65,
+    "depth": 70,
+    "night_owl": 92,
+    "freshness": 55,
+    "global": 60,
+    "binge": 72
+  },
+  "narrative": "2026 年，你最爱在 23 点后打开屏幕。你的观影口味偏向科幻与悬疑的组合，说明你内心住着一个充满好奇心的探索者。你一旦开始就停不下来——binge 指数 0.72，是典型的沉浸型观众。你只看好故事，平均评分 8.1，时间从不浪费。这一年 6 月，你的口味从剧情转向了动画，也许生活也在悄悄发生什么变化。",
+  "highlights": [
+    "深夜观影占比 45%，是名副其实的夜猫子",
+    "最爱类型组合：科幻 × 悬疑，理性与好奇并存",
+    "Binge 指数 0.72，一旦开始就停不下来",
+    "平均评分 8.1，时间只留给好故事"
+  ],
+  "personality_traits": {
+    "openness": "高 — 你愿意尝试不同国家和文化的作品",
+    "conscientiousness": "中 — 你追剧有节奏但偶尔 binge",
+    "extraversion": "低 — 观影是你独处时的仪式",
+    "agreeableness": "高 — 你倾向于给作品更高评分",
+    "neuroticism": "中 — 你的观影频率有波动，反映情绪起伏"
+  }
+}
+```
+
+### Prompt 设计
 
 ```
-cron 每2小时触发公开仓库 fetch.yml
-        │
-        ├── git clone 私有仓库 (用 PAT) → 获得 data/trakt.db
-        ├── python fetch.py 增量抓取 → 更新 data/trakt.db
-        ├── git push data/trakt.db → 私有仓库 🔒
-        ├── python render.py → 生成 web/data/*.json
-        └── git push web/data/*.json → 公开仓库 → 触发 deploy.yml → GitHub Pages
+你是一位专业的观影行为分析师。请基于以下用户的观影数据，生成一份有温度、有洞察力的人格画像分析。
+
+要求：
+1. 用一个富有诗意的词定义用户的"观影原型"（如"深夜故事旅人"）
+2. 生成 3-5 个人格标签（带 emoji）
+3. 8 维度雷达图评分（0-100）
+4. 一段 150 字左右的叙事文案，像朋友在跟你聊天
+5. 3-5 个观影高光时刻
+6. 基于大五人格模型分析性格特质
+
+注意：
+- 语气温暖、有洞察力，不要机械
+- 发现数据中的矛盾和有趣模式
+- 可以大胆推测，但要有数据支撑
+
+用户观影数据：
+{结构化统计数据}
 ```
 
-## 实施步骤
+### API 选择
 
-### 1. 创建私有仓库
+| 模型 | 优势 | 劣势 |
+|---|---|---|
+| GPT-4o | 文笔最好，理解力强 | 费用较高 |
+| Claude 3.5 Sonnet | 安全、稳定 | 略保守 |
+| GLM-4-Plus | 国内访问快、中文好 | 创造力略弱 |
+| DeepSeek V3 | 便宜、中文好 | API 稳定性 |
 
-- 创建私有仓库 `traktDaily-data`
-- 将当前 `data/trakt.db` 及 `data/reports/` 迁移到私有仓库
-- 私有仓库只需要 `data/` 目录，不需要 scripts 和 web
+推荐 **GPT-4o** 或 **DeepSeek V3**（性价比高）。
 
-### 2. 配置 GitHub PAT
+### Secret 配置
 
-在公开仓库 `traktDaily` 的 **Settings → Secrets and variables → Actions** 添加：
+在 GitHub 仓库 **Settings → Secrets and variables → Actions** 添加：
 
 | Secret | 说明 |
-|--------|------|
-| `GH_PAT` | 具有私有仓库 `traktDaily-data` 读写权限的 Personal Access Token |
+|---|---|
+| `LLM_API_KEY` | 大模型 API Key |
+| `LLM_API_BASE` | API 地址（如 `https://api.openai.com/v1`，可选，默认 OpenAI） |
+| `LLM_MODEL` | 模型名称（如 `gpt-4o`，可选，默认 `gpt-4o`） |
 
-### 3. 修改 fetch.yml
+### fetch.yml 集成
 
 ```yaml
-# 新增步骤：
-# ① 拉取私有仓库数据（增量基准）
-- name: 拉取私有仓库数据
-  run: |
-    git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/<用户名>/traktDaily-data.git /tmp/data-repo
-    cp /tmp/data-repo/data/trakt.db data/trakt.db
-    cp -r /tmp/data-repo/data/reports data/reports 2>/dev/null || true
-
-# ② 执行抓取（原有步骤，不变）
-- name: 抓取 Trakt 数据
-  run: python -m scripts.fetch
-
-# ③ 推送数据回私有仓库
-- name: 推送数据到私有仓库
-  run: |
-    cp data/trakt.db /tmp/data-repo/data/trakt.db
-    cp -r data/reports /tmp/data-repo/data/ 2>/dev/null || true
-    cd /tmp/data-repo
-    git config user.name "github-actions[bot]"
-    git config user.email "github-actions[bot]@users.noreply.github.com"
-    git add data/
-    git diff --cached --quiet || git commit -m "data: 自动更新 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-    git push
-
-# ④ 生成前端数据（原有步骤，移到 render 中）
-- name: 生成前端数据
-  run: python -m scripts.render
-
-# ⑤ 提交 JSON 到公开仓库（原有步骤，改为只提交 web/data/）
-- name: 提交前端数据变更
-  run: |
-    git add web/data/
-    if git diff --cached --quiet; then
-      echo "前端数据无变更，跳过提交"
-    else
-      git commit -m "data: 自动更新前端数据 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-      git push
-    fi
+# ⑤c 生成人格画像（大模型分析）
+- name: 生成人格画像
+  run: python -m scripts.persona
+  env:
+    LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+    LLM_API_BASE: ${{ secrets.LLM_API_BASE }}
+    TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 ```
 
-### 4. 修改 deploy.yml
+### 缓存策略
 
-`deploy.yml` 不需要修改，但可移除 `scripts/render.py` 的触发条件（因为 render 已在 fetch 中执行）。
+- 大模型 API 调用有成本，不需要每次 fetch 都重新分析
+- `persona.py` 检查上次分析时间，若 <7 天则跳过
+- 也可通过 `workflow_dispatch` 手动触发更新
+- `persona.json` 存储在私有仓库，deploy 时拉取
 
-### 5. 更新 .gitignore
+---
 
-```gitignore
-# 数据库文件不再提交到公开仓库
-data/trakt.db
-data/reports/
-```
+## 五、自动叙事文案（规则引擎版，作为大模型的降级方案）
 
-### 6. 清理公开仓库
+如果大模型 API 不可用，使用规则引擎生成基础叙事：
 
-- 删除 `data/trakt.db` 和 `data/reports/` 从公开仓库
-- 清理 git 历史中的敏感数据
+> 你是一个 **深夜追剧人**。
+> 2026 年，你最爱在 23 点后打开屏幕，在夜色中进入故事的世界。
+> 你偏好 **科幻** 和 **悬疑** 的组合，是一个理性与好奇心并存的观众。
+> 你的 binge 指数高达 0.72——一旦开始就停不下来。
+> 你的平均评分 8.1，说明你是**精品猎人**，时间只留给好故事。
+> 这一年你的观影口味在 6 月发生了变化——从剧情转向了动画，也许生活也在发生什么。
 
-```bash
-# 从 git 缓存中移除
-git rm --cached data/trakt.db
-git rm --cached -r data/reports/
+---
 
-# 清理历史记录（可选，但推荐）
-# 使用 git filter-repo 或谨慎操作
-```
+## 六、数据需求评估
 
-### 7. 删除公开仓库中的敏感数据历史
+| 维度 | 现有数据是否够用 | 需要补充 |
+|---|---|---|
+| 小时分布 | ✅ `watched_at_local` | 无 |
+| 星期分布 | ✅ `watched_at_local` | 无 |
+| Binge 检测 | ✅ `watched_at_local` + `media_trakt_id` | 无 |
+| 评分偏好 | ✅ `plays.rating` | 无（可选 Trakt 用户评分 API） |
+| 国别/语言 | ✅ `media.country` / `media.language` | 无 |
+| 类型组合 | ✅ `genres` | 无 |
+| 追剧速度 | ✅ `season` + `number` + `watched_at` | 无 |
+| 首播年份 | ✅ `media.first_aired` | 无 |
+| 投票数（冷门度） | ✅ `media.votes` | 无 |
 
-```bash
-# 安装 git-filter-repo（推荐）
-pip install git-filter-repo
+现有数据完全够用，不需要额外调 API。
 
-# 从历史中移除 data/trakt.db
-git filter-repo --path data/trakt.db --path data/reports/ --force
-```
+---
 
-## 变更文件清单
+## 七、分阶段实施
 
-| 文件 | 变更类型 | 说明 |
-|------|----------|------|
-| `.github/workflows/fetch.yml` | 修改 | 新增 clone 私有仓库、push 数据到私有仓库 |
-| `.github/workflows/deploy.yml` | 修改 | 移除 render.py 触发条件（可选） |
-| `.gitignore` | 修改 | 新增 `data/trakt.db`、`data/reports/` |
-| `data/trakt.db` | 删除 | 不再提交到公开仓库 |
-| `data/reports/` | 删除 | 不再提交到公开仓库 |
-| 私有仓库 `traktDaily-data` | 新建 | 仅存放 `data/trakt.db` 和 `data/reports/` |
+### Phase 1: 数据层（db.py + persona.py）
 
-## 注意事项
+新增数据库查询函数：
+- `get_hourly_stats()` — 小时分布统计（0-23 点各时段观影量）
+- `get_weekday_stats()` — 星期分布（周一到周日）
+- `get_binge_stats()` — binge-watching 检测（同剧间隔 <2h 的连续观看）
+- `get_rating_preference()` — 评分偏好分析（平均评分、评分分布）
+- `get_country_stats()` — 国别/语言分布
+- `get_freshness_stats()` — 首播年份分布（追新 vs 看旧）
+- `get_watch_pattern()` — 月度波动分析（标准差/均值比）
+- `get_diversity_index()` — 类型多样性指数（香农熵）
 
-1. `GH_PAT` 需要 `repo` 权限（能读写私有仓库）
-2. `web/data/*.json` 仍然公开（网站需要展示数据），但原始数据库 `trakt.db` 完全私有
-3. 公开仓库的 git 历史中仍可能残留 `data/trakt.db` 的内容，需要 `git filter-repo` 彻底清理
-4. 首次运行时建议先手动将私有仓库的 `data/trakt.db` 复制到公开仓库本地，确保增量抓取正常
+`persona.py` 收集以上数据，整理为结构化 JSON，传给大模型或规则引擎。
+
+### Phase 2: 规则标签引擎
+
+实现标签匹配规则引擎：
+- 每个标签定义：`id`、`icon`、`name`、`description`、`condition`（lambda）、`strength`（0-1）
+- 遍历所有标签，匹配条件，计算强度
+- 输出标签列表
+
+### Phase 3: 大模型人格评判
+
+- `persona.py` 调用大模型 API
+- 组装 Prompt（结构化数据 + 指令模板）
+- 解析返回的 JSON
+- 降级策略：API 失败时用规则引擎生成基础版
+
+### Phase 4: 雷达图 + 叙事生成
+
+- 8 维标准化评分计算（0-100）
+- 自动叙事文案（大模型版 / 规则引擎降级版）
+- 输出 `persona.json`
+
+### Phase 5: 前端展示
+
+新增 `PersonaSection.vue`，放在 TotalStats 和 MonthlyJourney 之间：
+
+- **原型标签**：大字展示"观影原型"名称 + 描述
+- **雷达图**：ECharts radar，8 维度
+- **标签卡片**：网格展示 3-5 个标签
+- **叙事文案**：大字居中，逐行淡入
+- **性格特质**：大五人格简要展示
+- **高光时刻**：列表展示
+
+### Phase 6: 年度演变（可选）
+
+- 按季度展示偏好变化
+- "你的观影口味在 X 月发生了变化"
+- 时间线动画
+
+---
+
+## 八、文件变更清单
+
+| 文件 | 类型 | 说明 |
+|---|---|---|
+| `scripts/db.py` | 修改 | 新增 8 个分析查询函数 |
+| `scripts/persona.py` | 新建 | 人格分析主逻辑：数据收集 → 大模型调用 → JSON 输出 |
+| `scripts/config.py` | 修改 | 新增 `LLM_API_KEY`、`LLM_API_BASE`、`LLM_MODEL` 配置 |
+| `.github/workflows/fetch.yml` | 修改 | 新增"生成人格画像"步骤 |
+| `web/src/components/PersonaSection.vue` | 新建 | 前端人格画像展示组件 |
+| `web/src/App.vue` | 修改 | 在 TotalStats 和 MonthlyJourney 之间插入 PersonaSection |
+| GitHub Secrets | 配置 | `LLM_API_KEY`、`LLM_API_BASE`、`LLM_MODEL` |
+
+---
+
+## 九、优先级
+
+1. **Phase 1-2**（数据层 + 规则引擎）：先跑通基础分析，不依赖大模型
+2. **Phase 3**（大模型评判）：接入 API，生成有温度的人格分析
+3. **Phase 4-5**（前端展示）：全屏 section，作为报告的高光时刻
+4. **Phase 6**（年度演变）：锦上添花
+
+---
+
+## 十、注意事项
+
+1. **大模型成本控制**：persona.json 缓存 7 天，不每次重新生成
+2. **降级策略**：API 失败时用规则引擎兜底，保证页面不空白
+3. **隐私**：persona.json 存私有仓库，仅部署时注入
+4. **Prompt 工程**：需要反复调试 prompt 才能产出有洞察力的文案
+5. **数据量**：当前 1800+ 条记录足够分析，数据越多越准
