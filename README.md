@@ -44,6 +44,7 @@
 - **Trakt 跳转**：标题与海报均为超链接，一键跳转 Trakt 页面
 - **隐私保护**：最近观影隐藏精确时间，仅显示相对日期
 - **智能部署**：仅当 `web/` 有实际变更时才触发 Pages 重建
+- **人格画像**：接入 DeepSeek 大模型，分析观影行为生成人格原型、标签、雷达图、叙事文案和大五人格特质
 
 ## 快速开始
 
@@ -59,12 +60,18 @@
 
 在 Fork 后的仓库中，进入 **Settings → Secrets and variables → Actions**，添加以下 Secrets：
 
-| Secret 名称 | 说明 | 获取方式 |
-|---|---|---|
-| `TRAKT_CLIENT_ID` | Trakt API 的 Client ID | [Trakt API Settings](https://trakt.tv/oauth/applications) 创建应用获取 |
-| `TRAKT_USERNAME` | Trakt 用户名 | 你的 Trakt 账号名 |
-| `TMDB_API_KEY` | TMDB API Key（获取海报） | [TMDB API Settings](https://www.themoviedb.org/settings/api) 申请 |
-| `GH_PAT` | GitHub Personal Access Token | [GitHub Token Settings](https://github.com/settings/tokens) 创建，勾选 `repo` 权限 |
+| Secret 名称 | 必填 | 说明 | 获取方式 |
+|---|---|---|---|
+| `TRAKT_CLIENT_ID` | ✅ | Trakt API 的 Client ID | [Trakt API Settings](https://trakt.tv/oauth/applications) 创建应用获取 |
+| `TRAKT_USERNAME` | ✅ | Trakt 用户名 | 你的 Trakt 账号名 |
+| `TMDB_API_KEY` | ✅ | TMDB API Key（获取海报） | [TMDB API Settings](https://www.themoviedb.org/settings/api) 申请 |
+| `GH_PAT` | ✅ | GitHub Personal Access Token | [GitHub Token Settings](https://github.com/settings/tokens) 创建，勾选 `repo` 权限 |
+| `LLM_API_KEY` | 可选 | DeepSeek API Key（人格画像分析） | [DeepSeek Platform](https://platform.deepseek.com/) 创建 API Key |
+| `LLM_API_BASE` | 可选 | 大模型 API 地址 | 默认 `https://api.deepseek.com/v1`，也可换 OpenAI 等 |
+| `LLM_MODEL` | 可选 | 模型名称 | 默认 `deepseek-chat`，也可填 `gpt-4o` 等 |
+
+> **人格画像**：`LLM_*` 为可选配置。未配置时自动降级为规则引擎生成基础版人格画像，配
+> 置后由 DeepSeek 大模型生成有温度、有洞察力的深度分析。
 
 ### 4. 启用 GitHub Pages
 
