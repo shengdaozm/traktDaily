@@ -17,13 +17,18 @@ export function useTraktData() {
     error.value = null
     try {
       const [sumResp, mediaResp, topResp, metaResp, personaResp] = await Promise.all([
-        fetch('data/summary.json'),
+        fetch('data/summary.json').catch(() => null),
         fetch('data/media.json').catch(() => null),
         fetch('data/top_media.json').catch(() => null),
         fetch('data/recent_meta.json').catch(() => null),
         fetch('data/persona.json').catch(() => null),
       ])
-      summary.value = await sumResp.json()
+      if (!sumResp) throw new Error('核心数据文件 (summary.json) 加载失败，请先运行数据抓取')
+      try {
+        summary.value = await sumResp.json()
+      } catch {
+        throw new Error('核心数据文件 (summary.json) 格式错误，请重新运行数据抓取')
+      }
       mediaList.value = mediaResp ? await mediaResp.json() : []
       topMedia.value = topResp ? await topResp.json() : []
       if (metaResp) recentMeta.value = await metaResp.json()

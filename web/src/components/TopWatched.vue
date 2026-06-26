@@ -1,7 +1,7 @@
 <script setup>
 import { inject, ref, computed, onMounted } from 'vue'
-import { traktUrl, translateGenre } from '@/utils/genres'
-import { relativeDate, formatMinutes } from '@/utils/format'
+import { traktUrl } from '@/utils/genres'
+import { formatMinutes } from '@/utils/format'
 
 const topMedia = inject('topMedia')
 const mediaMap = inject('mediaMap')
@@ -77,7 +77,7 @@ onMounted(() => {
 }
 .poster-scroll::-webkit-scrollbar { height: 4px; }
 .poster-card {
-  flex-shrink: 0; width: 160px; scroll-snap-align: start;
+  position: relative; flex-shrink: 0; width: 160px; scroll-snap-align: start;
   opacity: 0; animation: fadeInUp 0.6s ease forwards;
   transition: transform var(--transition);
 }

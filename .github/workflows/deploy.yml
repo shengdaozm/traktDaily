@@ -51,6 +51,10 @@ jobs:
             echo "⚠️ 未找到任何数据文件！请先手动触发 Fetch Trakt Data 工作流。"
             exit 1
           fi
+          if [ ! -f web/public/data/summary.json ]; then
+            echo "⚠️ 缺少关键数据文件 summary.json！请检查 Fetch Trakt Data 工作流。"
+            exit 1
+          fi
 
       # ③ 配置 Node.js
       - name: 配置 Node.js

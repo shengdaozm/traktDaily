@@ -103,6 +103,7 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
       <div class="loading-screen">
         <div class="loading-icon">⚠️</div>
         <p>数据加载失败</p>
+        <p class="error-detail" v-if="error">{{ error.message || error }}</p>
       </div>
     </template>
 
@@ -133,5 +134,9 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   background: #0d1117; color: var(--text-dim);
 }
 .loading-icon { font-size: 4rem; animation: pulse 1.5s ease-in-out infinite; }
+.error-detail {
+  font-size: 0.85rem; color: var(--text-dim); max-width: 400px;
+  text-align: center; word-break: break-all; margin-top: 8px;
+}
 @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 </style>
