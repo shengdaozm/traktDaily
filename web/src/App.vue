@@ -3,6 +3,7 @@ import { ref, provide, onMounted, onUnmounted } from 'vue'
 import { useTraktData } from '@/composables/useTraktData'
 import HeroIntro from '@/components/HeroIntro.vue'
 import TotalStats from '@/components/TotalStats.vue'
+import PersonaSection from '@/components/PersonaSection.vue'
 import MonthlyJourney from '@/components/MonthlyJourney.vue'
 import TopWatched from '@/components/TopWatched.vue'
 import GenreSection from '@/components/GenreSection.vue'
@@ -11,7 +12,7 @@ import LibrarySection from '@/components/LibrarySection.vue'
 import ClosingSection from '@/components/ClosingSection.vue'
 
 const {
-  summary, mediaList, topMedia, recentMeta, loading, error,
+  summary, mediaList, topMedia, persona, recentMeta, loading, error,
   mediaMap, lastUpdated, totalStats,
   monthlyStats, dailyGenreStats, genreStats,
 } = useTraktData()
@@ -19,6 +20,7 @@ const {
 provide('summary', summary)
 provide('mediaList', mediaList)
 provide('topMedia', topMedia)
+provide('persona', persona)
 provide('mediaMap', mediaMap)
 provide('totalStats', totalStats)
 provide('monthlyStats', monthlyStats)
@@ -39,6 +41,7 @@ const activeSection = ref(0)
 const sections = [
   { id: 'hero', label: '封面' },
   { id: 'stats', label: '总览' },
+  { id: 'persona', label: '画像' },
   { id: 'monthly', label: '月度' },
   { id: 'top', label: '排行' },
   { id: 'genre', label: '类型' },
@@ -106,12 +109,13 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
     <template v-else>
       <div :id="`section-0`"><HeroIntro :media-list="mediaList" /></div>
       <div :id="`section-1`"><TotalStats /></div>
-      <div :id="`section-2`"><MonthlyJourney /></div>
-      <div :id="`section-3`"><TopWatched /></div>
-      <div :id="`section-4`"><GenreSection /></div>
-      <div :id="`section-5`"><HeatmapSection /></div>
-      <div :id="`section-6`"><LibrarySection /></div>
-      <div :id="`section-7`"><ClosingSection /></div>
+      <div :id="`section-2`"><PersonaSection /></div>
+      <div :id="`section-3`"><MonthlyJourney /></div>
+      <div :id="`section-4`"><TopWatched /></div>
+      <div :id="`section-5`"><GenreSection /></div>
+      <div :id="`section-6`"><HeatmapSection /></div>
+      <div :id="`section-7`"><LibrarySection /></div>
+      <div :id="`section-8`"><ClosingSection /></div>
     </template>
   </div>
 </template>

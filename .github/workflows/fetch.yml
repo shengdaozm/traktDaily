@@ -57,6 +57,14 @@ jobs:
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
+      # ⑤c 生成观影人格画像（DeepSeek 大模型分析）
+      - name: 生成人格画像
+        run: python -m scripts.persona
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_API_BASE: ${{ secrets.LLM_API_BASE }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+
       # ⑥ 生成前端 JSON 数据
       - name: 生成前端数据
         run: python -m scripts.render

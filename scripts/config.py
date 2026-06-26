@@ -35,3 +35,11 @@ DB_PATH = os.path.join(PROJECT_ROOT, "data", "trakt.db")
 REPORTS_DIR = os.path.join(PROJECT_ROOT, "data", "reports")
 # 前端 JSON 数据目录
 WEB_DATA_DIR = os.path.join(PROJECT_ROOT, "web", "public", "data")
+
+# ── 大模型配置 ─────────────────────────────────────────────
+# 用于生成观影人格画像分析
+LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
+LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://api.deepseek.com/v1")
+LLM_MODEL = os.environ.get("LLM_MODEL", "deepseek-chat")
+# persona.json 缓存天数，避免每次都调用大模型
+PERSONA_CACHE_DAYS = 7

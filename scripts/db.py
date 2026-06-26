@@ -8,6 +8,7 @@ plays 表存储每次观影事件 + 核心元数据，media 表存储完整的�
 import sqlite3
 import json
 import os
+from datetime import datetime
 from scripts.config import DB_PATH, REPORTS_DIR, WEB_DATA_DIR
 
 
@@ -366,3 +367,260 @@ def ensure_dirs():
     os.makedirs(DB_PATH.replace("trakt.db", ""), exist_ok=True)
     os.makedirs(REPORTS_DIR, exist_ok=True)
     os.makedirs(WEB_DATA_DIR, exist_ok=True)
+
+
+# ═══════════════════════════════════════════════════════════
+# 人格画像分析查询
+# ═══════════════════════════════════════════════════════════
+
+
+def get_hourly_stats() -> list[dict]:
+    """按小时统计观影量（0-23点），用于分析作息偏好。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT CAST(strftime('%H', watched_at_local) AS INTEGER) AS hour,
+               COUNT(*) AS count,
+               COALESCE(SUM(runtime), 0) AS total_minutes
+        FROM plays
+        WHERE watched_at_local IS NOT NULL
+        GROUP BY hour ORDER BY hour
+    """).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_weekday_stats() -> list[dict]:
+    """按星期统计观影量（0=周日, 6=周六），用于分析生活节奏。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT CAST(strftime('%w', watched_at_local) AS INTEGER) AS weekday,
+               COUNT(*) AS count
+        FROM plays
+        WHERE watched_at_local IS NOT NULL
+        GROUP BY weekday ORDER BY weekday
+    """).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_binge_stats() -> dict:
+    """检测 binge-watching 行为（同一剧集间隔<2小时的连续观看）。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT media_trakt_id, watched_at_local, title
+        FROM plays
+        WHERE watched_at_local IS NOT NULL AND media_trakt_id IS NOT NULL
+        ORDER BY media_trakt_id, watched_at_local
+    """).fetchall()
+    conn.close()
+
+    if not rows:
+        return {"binge_count": 0, "total_sessions": 0, "binge_ratio": 0.0}
+
+    binge_count = 0
+    total_sessions = 0
+    prev_mid = None
+    prev_time = None
+
+    for r in rows:
+        mid = r["media_trakt_id"]
+        try:
+            t = datetime.fromisoformat(r["watched_at_local"])
+        except (ValueError, TypeError):
+            continue
+
+        if prev_mid == mid and prev_time:
+            gap = (t - prev_time).total_seconds() / 3600
+            if gap < 2:
+                binge_count += 1
+        total_sessions += 1
+        prev_mid = mid
+        prev_time = t
+
+    binge_ratio = binge_count / max(total_sessions, 1)
+    return {
+        "binge_count": binge_count,
+        "total_sessions": total_sessions,
+        "binge_ratio": round(binge_ratio, 3),
+    }
+
+
+def get_rating_preference() -> dict:
+    """分析评分偏好：平均评分、评分分布、精品度。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT rating, votes FROM media
+        WHERE rating IS NOT NULL AND rating > 0
+    """).fetchall()
+    conn.close()
+
+    if not rows:
+        return {"avg_rating": 0, "rating_dist": {}, "quality_score": 0}
+
+    ratings = [r["rating"] for r in rows]
+    avg = sum(ratings) / len(ratings)
+    dist = {}
+    for r in ratings:
+        bucket = f"{int(r)}-{int(r)+1}"
+        dist[bucket] = dist.get(bucket, 0) + 1
+
+    return {
+        "avg_rating": round(avg, 2),
+        "rating_dist": dist,
+        "quality_score": round(min(avg / 10 * 100, 100)),
+    }
+
+
+def get_country_stats() -> list[dict]:
+    """统计国别/语言分布。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT country, language, COUNT(*) AS count
+        FROM media
+        WHERE country IS NOT NULL AND country != ''
+        GROUP BY country ORDER BY count DESC
+    """).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_freshness_stats() -> dict:
+    """分析内容新鲜度：首播年份分布。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT first_aired FROM media
+        WHERE first_aired IS NOT NULL
+    """).fetchall()
+    conn.close()
+
+    if not rows:
+        return {"avg_year": 0, "year_dist": {}, "freshness_score": 0}
+
+    years = []
+    for r in rows:
+        try:
+            y = int(r["first_aired"][:4])
+            years.append(y)
+        except (ValueError, TypeError, IndexError):
+            continue
+
+    if not years:
+        return {"avg_year": 0, "year_dist": {}, "freshness_score": 0}
+
+    avg_year = sum(years) / len(years)
+    current_year = datetime.now().year
+    freshness = round(min((avg_year - 2000) / (current_year - 2000) * 100, 100))
+
+    year_dist = {}
+    for y in years:
+        decade = (y // 5) * 5
+        key = f"{decade}s"
+        year_dist[key] = year_dist.get(key, 0) + 1
+
+    return {
+        "avg_year": round(avg_year),
+        "year_dist": year_dist,
+        "freshness_score": max(0, freshness),
+    }
+
+
+def get_watch_pattern() -> dict:
+    """分析月度观影波动：稳定型 vs 脉冲型。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT substr(watched_at_local, 1, 7) AS month, COUNT(*) AS count
+        FROM plays
+        WHERE watched_at_local IS NOT NULL
+        GROUP BY month ORDER BY month
+    """).fetchall()
+    conn.close()
+
+    if len(rows) < 2:
+        return {"stability": 100, "pattern_type": "stable", "std_dev": 0, "mean": 0}
+
+    counts = [r["count"] for r in rows]
+    mean = sum(counts) / len(counts)
+    variance = sum((c - mean) ** 2 for c in counts) / len(counts)
+    std_dev = variance ** 0.5
+    cv = std_dev / mean if mean > 0 else 0
+
+    stability = round(max(0, 100 - cv * 50))
+    pattern_type = "pulse" if cv > 0.8 else "balanced" if cv > 0.4 else "stable"
+
+    return {
+        "stability": stability,
+        "pattern_type": pattern_type,
+        "std_dev": round(std_dev, 1),
+        "mean": round(mean, 1),
+    }
+
+
+def get_diversity_index() -> dict:
+    """计算类型多样性指数（香农熵），反映观影广度。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT genres, COUNT(*) AS cnt
+        FROM plays
+        WHERE genres IS NOT NULL AND genres != ''
+        GROUP BY media_trakt_id, genres
+    """).fetchall()
+    conn.close()
+
+    genre_counts = {}
+    total = 0
+    for r in rows:
+        try:
+            gl = json.loads(r["genres"])
+        except (json.JSONDecodeError, TypeError):
+            continue
+        for g in gl:
+            genre_counts[g] = genre_counts.get(g, 0) + r["cnt"]
+            total += r["cnt"]
+
+    if not genre_counts or total == 0:
+        return {"diversity_score": 0, "top_genres": [], "genre_count": 0}
+
+    import math
+    entropy = 0
+    for cnt in genre_counts.values():
+        p = cnt / total
+        if p > 0:
+            entropy -= p * math.log2(p)
+
+    max_entropy = math.log2(len(genre_counts)) if len(genre_counts) > 1 else 1
+    normalized = round((entropy / max_entropy * 100) if max_entropy > 0 else 0)
+
+    sorted_genres = sorted(genre_counts.items(), key=lambda x: x[1], reverse=True)
+    top_genres = [{"genre": g, "count": c} for g, c in sorted_genres[:5]]
+
+    return {
+        "diversity_score": normalized,
+        "top_genres": top_genres,
+        "genre_count": len(genre_counts),
+    }
+
+
+def get_runtime_preference() -> dict:
+    """分析时长偏好：电影/剧集比例、平均时长。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT media_type, runtime, COUNT(*) AS count, SUM(runtime) AS total_minutes
+        FROM plays
+        WHERE runtime IS NOT NULL AND runtime > 0
+        GROUP BY media_type
+    """).fetchall()
+    conn.close()
+
+    if not rows:
+        return {"avg_runtime": 0, "movie_ratio": 0, "total_minutes": 0}
+
+    total_count = sum(r["count"] for r in rows)
+    total_minutes = sum(r["total_minutes"] or 0 for r in rows)
+    movie_count = sum(r["count"] for r in rows if r["media_type"] == "movie")
+    avg_runtime = total_minutes / max(total_count, 1)
+
+    return {
+        "avg_runtime": round(avg_runtime),
+        "movie_ratio": round(movie_count / max(total_count, 1), 3),
+        "total_minutes": total_minutes,
+    }

@@ -3,6 +3,7 @@ import { ref, shallowRef, computed } from 'vue'
 const summary = shallowRef(null)
 const mediaList = ref([])
 const topMedia = ref([])
+const persona = shallowRef(null)
 const recentMeta = ref({ total: 0, total_pages: 0, page_size: 100 })
 const recentPageCache = ref(new Map())
 const loading = ref(true)
@@ -15,16 +16,18 @@ export function useTraktData() {
     loading.value = true
     error.value = null
     try {
-      const [sumResp, mediaResp, topResp, metaResp] = await Promise.all([
+      const [sumResp, mediaResp, topResp, metaResp, personaResp] = await Promise.all([
         fetch('data/summary.json'),
         fetch('data/media.json').catch(() => null),
         fetch('data/top_media.json').catch(() => null),
         fetch('data/recent_meta.json').catch(() => null),
+        fetch('data/persona.json').catch(() => null),
       ])
       summary.value = await sumResp.json()
       mediaList.value = mediaResp ? await mediaResp.json() : []
       topMedia.value = topResp ? await topResp.json() : []
       if (metaResp) recentMeta.value = await metaResp.json()
+      if (personaResp) persona.value = await personaResp.json()
 
       const firstPage = await fetchRecentPage(1)
       recentPageCache.value.set(1, firstPage)
@@ -84,7 +87,7 @@ export function useTraktData() {
   if (!loaded) loadData()
 
   return {
-    summary, mediaList, topMedia, recentMeta, loading, error,
+    summary, mediaList, topMedia, persona, recentMeta, loading, error,
     mediaMap, lastUpdated, totalStats,
     monthlyStats, dailyGenreStats, genreStats,
     loadData, fetchRecentPage, getRecentPage,
