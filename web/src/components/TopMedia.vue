@@ -2,30 +2,27 @@
 import { inject, computed } from 'vue'
 import { traktUrl, cleanShowTitle } from '@/utils/genres'
 
-const recentPlays = inject('recentPlays')
+const topMedia = inject('topMedia')
 const mediaMap = inject('mediaMap')
 
-const topMedia = computed(() => {
-  const plays = recentPlays.value || []
-  if (!plays.length) return []
-  const map = {}
-  plays.forEach(p => {
-    const key = p.media_trakt_id || p.trakt_id
-    if (!map[key]) {
-      map[key] = {
-        key,
-        title: cleanShowTitle(p.title),
-        poster_url: p.poster_url,
-        count: 0,
-        media_type: p.media_type,
-        year: p.year,
-        item: p,
-      }
-    }
-    map[key].count++
-  })
-  return Object.values(map).sort((a, b) => b.count - a.count).slice(0, 15)
-})
+const displayList = computed(() => (topMedia.value || []).slice(0, 15))
+
+function getItemUrl(item) {
+  if (item.slug) {
+    const type = item.media_type === 'movie' ? 'movies' : 'shows'
+    return `https://trakt.tv/${type}/${item.slug}`
+  }
+  const media = mediaMap.value?.get(item.trakt_id)
+  if (media?.slug) {
+    const type = media.media_type === 'movie' ? 'movies' : 'shows'
+    return `https://trakt.tv/${type}/${media.slug}`
+  }
+  return '#'
+}
+
+function getItemPoster(item) {
+  return item.poster_url || mediaMap.value?.get(item.trakt_id)?.poster_url
+}
 
 function scrollBy(dir) {
   const el = document.getElementById('top-media-scroll')
@@ -34,30 +31,30 @@ function scrollBy(dir) {
 </script>
 
 <template>
-  <div class="top-media-wrapper" v-if="topMedia.length">
+  <div class="top-media-wrapper" v-if="displayList.length">
     <button class="scroll-btn left" @click="scrollBy(-1)">‹</button>
     <div id="top-media-scroll" class="top-media-scroll">
       <a
-        v-for="(m, i) in topMedia" :key="m.key"
-        :href="traktUrl(m.item, mediaMap)" target="_blank" class="top-media-card"
+        v-for="(m, i) in displayList" :key="m.trakt_id"
+        :href="getItemUrl(m)" target="_blank" class="top-media-card"
       >
         <div class="top-media-card-wrapper">
           <div class="top-media-rank">{{ i + 1 }}</div>
-          <img v-if="m.poster_url" class="top-media-poster"
-            :src="m.poster_url" alt="" loading="lazy"
+          <img v-if="getItemPoster(m)" class="top-media-poster"
+            :src="getItemPoster(m)" alt="" loading="lazy"
             @error="$event.target.style.display='none'; $event.target.nextElementSibling.style.display='flex'"
           />
-          <div v-if="!m.poster_url" class="top-media-poster placeholder">
-            {{ m.media_type === 'movie' ? '🎥' : '📺' }}
+          <div v-if="!getItemPoster(m)" class="top-media-poster placeholder">
+            {{ m.media_type === 'episode' ? '📺' : '🎥' }}
           </div>
-          <div v-else class="top-media-poster placeholder" style="display:none">
-            {{ m.media_type === 'movie' ? '🎥' : '📺' }}
+          <div v-if="getItemPoster(m)" class="top-media-poster placeholder" style="display:none">
+            {{ m.media_type === 'episode' ? '📺' : '🎥' }}
           </div>
         </div>
         <div class="top-media-info">
           <div class="top-media-title" :title="m.title">{{ m.title }}</div>
           <div class="top-media-count">
-            {{ m.media_type === 'movie' ? '🎥' : '📺' }} {{ m.count }} 次
+            {{ m.media_type === 'episode' ? '📺' : '🎥' }} {{ m.watch_count }} 次
           </div>
         </div>
       </a>

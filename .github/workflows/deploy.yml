@@ -1,5 +1,5 @@
 # 部署前端页面到 GitHub Pages
-# 仅当 web/ 目录有实际变更推送时才触发部署
+# 触发方式：1) web/ 代码变更 push  2) fetch.yml 数据更新后触发
 name: Deploy to GitHub Pages
 
 on:
@@ -7,16 +7,20 @@ on:
     branches: [main]
     paths:
       - 'web/**'
-  # 允许手动触发
+      - '.github/workflows/deploy.yml'
+  # 被 fetch.yml 触发
   workflow_dispatch:
+  # 允许手动触发
+  workflow_run:
+    workflows: ["Fetch Trakt Data"]
+    types:
+      - completed
 
-# 设置 GitHub Pages 所需的权限
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# 防止多个部署任务同时运行
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -24,16 +28,27 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # 只有 fetch 成功时才部署（workflow_run 触发时检查）
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      # ① 检出代码
+      # ① 检出公开仓库代码（不含数据）
       - name: 检出仓库
         uses: actions/checkout@v4
 
-      # ② 配置 Node.js
+      # ② 从私有仓库拉取前端 JSON 数据
+      - name: 拉取私有仓库数据
+        run: |
+          git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/shengdaozm/traktData.git /tmp/data-repo
+          mkdir -p web/public/data
+          cp -r /tmp/data-repo/web/public/data/. web/public/data/ 2>/dev/null || true
+          echo "已拉取前端数据文件："
+          ls -la web/public/data/ || true
+
+      # ③ 配置 Node.js
       - name: 配置 Node.js
         uses: actions/setup-node@v4
         with:
@@ -41,20 +56,20 @@ jobs:
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
 
-      # ③ 安装依赖并构建
+      # ④ 安装依赖并构建
       - name: 安装依赖并构建
         run: |
           npm install
           npm run build
         working-directory: web/
 
-      # ④ 上传 Pages 产物
+      # ⑤ 上传 Pages 产物
       - name: 上传 Pages 产物
         uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist/
 
-      # ⑤ 部署到 GitHub Pages
+      # ⑥ 部署到 GitHub Pages
       - name: 部署到 GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

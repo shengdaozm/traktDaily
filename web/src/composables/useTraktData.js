@@ -2,7 +2,9 @@ import { ref, shallowRef, computed } from 'vue'
 
 const summary = shallowRef(null)
 const mediaList = ref([])
-const recentPlays = ref([])
+const topMedia = ref([])
+const recentMeta = ref({ total: 0, total_pages: 0, page_size: 100 })
+const recentPageCache = ref(new Map())
 const loading = ref(true)
 const error = ref(null)
 
@@ -13,14 +15,20 @@ export function useTraktData() {
     loading.value = true
     error.value = null
     try {
-      const [sumResp, mediaResp, recentResp] = await Promise.all([
+      const [sumResp, mediaResp, topResp, metaResp] = await Promise.all([
         fetch('data/summary.json'),
         fetch('data/media.json').catch(() => null),
-        fetch('data/recent.json').catch(() => null),
+        fetch('data/top_media.json').catch(() => null),
+        fetch('data/recent_meta.json').catch(() => null),
       ])
       summary.value = await sumResp.json()
       mediaList.value = mediaResp ? await mediaResp.json() : []
-      recentPlays.value = recentResp ? await recentResp.json() : []
+      topMedia.value = topResp ? await topResp.json() : []
+      if (metaResp) recentMeta.value = await metaResp.json()
+
+      const firstPage = await fetchRecentPage(1)
+      recentPageCache.value.set(1, firstPage)
+
       loaded = true
     } catch (err) {
       error.value = err
@@ -28,6 +36,25 @@ export function useTraktData() {
     } finally {
       loading.value = false
     }
+  }
+
+  async function fetchRecentPage(page) {
+    if (recentPageCache.value.has(page)) {
+      return recentPageCache.value.get(page)
+    }
+    try {
+      const resp = await fetch(`data/recent_${page}.json`)
+      if (!resp.ok) return []
+      const data = await resp.json()
+      recentPageCache.value.set(page, data)
+      return data
+    } catch {
+      return []
+    }
+  }
+
+  function getRecentPage(page) {
+    return recentPageCache.value.get(page) || []
   }
 
   const mediaMap = computed(() => {
@@ -57,9 +84,9 @@ export function useTraktData() {
   if (!loaded) loadData()
 
   return {
-    summary, mediaList, recentPlays, loading, error,
+    summary, mediaList, topMedia, recentMeta, loading, error,
     mediaMap, lastUpdated, totalStats,
     monthlyStats, dailyGenreStats, genreStats,
-    loadData,
+    loadData, fetchRecentPage, getRecentPage,
   }
 }

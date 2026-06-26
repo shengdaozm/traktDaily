@@ -10,9 +10,10 @@ import ChartsTab from '@/components/ChartsTab.vue'
 import LibraryTab from '@/components/LibraryTab.vue'
 
 const {
-  summary, mediaList, recentPlays, loading, error,
+  summary, mediaList, topMedia, recentMeta, loading, error,
   mediaMap, lastUpdated, totalStats,
   monthlyStats, dailyGenreStats, genreStats,
+  fetchRecentPage, getRecentPage,
 } = useTraktData()
 
 const activeTab = ref('overview')
@@ -25,11 +26,14 @@ const tabs = [
 
 provide('summary', summary)
 provide('mediaList', mediaList)
-provide('recentPlays', recentPlays)
+provide('topMedia', topMedia)
+provide('recentMeta', recentMeta)
 provide('mediaMap', mediaMap)
 provide('monthlyStats', monthlyStats)
 provide('dailyGenreStats', dailyGenreStats)
 provide('genreStats', genreStats)
+provide('fetchRecentPage', fetchRecentPage)
+provide('getRecentPage', getRecentPage)
 
 const resizeCallbacks = ref([])
 

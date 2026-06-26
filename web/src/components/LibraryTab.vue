@@ -1,9 +1,9 @@
 <script setup>
 import { inject, ref, computed } from 'vue'
-import { traktUrl, translateGenre, cleanShowTitle } from '@/utils/genres'
+import { traktUrl, translateGenre } from '@/utils/genres'
 import { relativeDate, formatMinutes } from '@/utils/format'
 
-const recentPlays = inject('recentPlays')
+const topMedia = inject('topMedia')
 const mediaMap = inject('mediaMap')
 
 const filter = ref('all')
@@ -11,37 +11,27 @@ const sortBy = ref('watched')
 const visibleCount = ref(24)
 
 const library = computed(() => {
-  const plays = recentPlays.value || []
-  const map = {}
-  plays.forEach(p => {
-    const key = p.media_trakt_id || p.trakt_id
-    if (!map[key]) {
-      const media = mediaMap.value?.get(key)
-      map[key] = {
-        key,
-        title: cleanShowTitle(p.title),
-        poster_url: p.poster_url,
-        backdrop_url: media?.backdrop_url,
-        media_type: p.media_type,
-        year: p.year || media?.year,
-        rating: media?.rating || p.rating,
-        genres: media?.genres ? JSON.parse(media.genres) : (p.genres ? JSON.parse(p.genres) : []),
-        slug: media?.slug,
-        overview: media?.overview || p.overview,
-        count: 0,
-        total_minutes: 0,
-        last_watched: p.watched_at_local,
-        item: p,
-        media,
-      }
-    }
-    map[key].count++
-    map[key].total_minutes += p.runtime || 0
-    if (p.watched_at_local > map[key].last_watched) {
-      map[key].last_watched = p.watched_at_local
+  const items = topMedia.value || []
+  return items.map(m => {
+    const media = mediaMap.value?.get(m.trakt_id)
+    return {
+      key: m.trakt_id,
+      title: m.title || 'Unknown',
+      poster_url: m.poster_url || media?.poster_url,
+      backdrop_url: media?.backdrop_url,
+      media_type: m.media_type === 'episode' ? 'episode' : m.media_type,
+      year: media?.year,
+      rating: m.rating || media?.rating,
+      genres: media?.genres ? JSON.parse(media.genres) : (m.genres ? JSON.parse(m.genres) : []),
+      slug: media?.slug,
+      overview: media?.overview,
+      count: m.watch_count || 0,
+      total_minutes: m.total_minutes || 0,
+      last_watched: '',
+      item: m,
+      media,
     }
   })
-  return Object.values(map)
 })
 
 const filtered = computed(() => {
@@ -52,8 +42,6 @@ const filtered = computed(() => {
   const sorted = [...list]
   if (sortBy.value === 'watched') {
     sorted.sort((a, b) => b.count - a.count)
-  } else if (sortBy.value === 'recent') {
-    sorted.sort((a, b) => b.last_watched.localeCompare(a.last_watched))
   } else if (sortBy.value === 'rating') {
     sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0))
   } else if (sortBy.value === 'time') {
@@ -102,7 +90,6 @@ const showCounts = computed(() => {
       <div class="sort-group">
         <select v-model="sortBy">
           <option value="watched">观看次数最多</option>
-          <option value="recent">最近观看</option>
           <option value="time">观看时长最长</option>
           <option value="rating">评分最高</option>
         </select>
@@ -145,7 +132,7 @@ const showCounts = computed(() => {
           <div class="lib-stats">
             <span>⏱️ {{ formatMinutes(m.total_minutes) }}</span>
             <span>·</span>
-            <span>{{ relativeDate(m.last_watched) }}</span>
+            <span>{{ m.count }} 次观看</span>
           </div>
         </div>
       </a>

@@ -10,17 +10,18 @@
 │ fetch.yml（每 2 小时）       │       │                              │
 │  ① 拉取私有仓库数据库        │ ←─── │  data/trakt.db 🔒            │
 │  ② 抓取 Trakt → 写入 SQLite  │       │  data/reports/ 🔒           │
-│  ③ render.py 生成前端 JSON   │       │  web/public/data/ (备份) 🔒 │
+│  ③ render.py 生成前端 JSON   │       │  web/public/data/*.json 🔒  │
 │  ④ 推送数据库 + JSON 回私有库│ ───→ │                              │
-│  ⑤ 推送 JSON 到公开仓库      │       └──────────────────────────────┘
-│                              │
-│ deploy.yml                   │
-│  → npm install + npm build   │
-│  → 部署 web/dist/ 到 Pages   │
+│  ⑤ 触发 deploy 工作流        │       └──────────────────────────────┘
+│                              │              ↑
+│ deploy.yml                   │              │
+│  ① 检出公开仓库代码（无数据） │              │
+│  ② 从私有仓库拉取 JSON 数据  │ ─────────────┘
+│  ③ npm build + 部署到 Pages  │
 └──────────────────────────────┘
 ```
 
-> 观影数据（SQLite 数据库）存储在私有仓库中，前端 JSON 数据同时保存在公开和私有仓库。deploy 仅在实际有数据变更时触发。
+> 公开仓库不包含任何数据文件。SQLite 数据库和前端 JSON 均存储在私有仓库，deploy 时从私有仓库拉取注入构建产物。
 
 ## 技术栈
 

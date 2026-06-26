@@ -9,14 +9,14 @@ on:
   # 允许手动触发（用于首次运行或调试）
   workflow_dispatch:
 
-# 授予 GITHUB_TOKEN 写权限，允许自动 commit & push
+# 授予 GITHUB_TOKEN 写权限，允许触发 deploy 工作流
 permissions:
   contents: write
+  actions: write
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    # 超时时间：10 分钟，防止 API 请求卡死
     timeout-minutes: 10
 
     steps:
@@ -63,6 +63,7 @@ jobs:
 
       # ⑦ 推送数据到私有仓库（数据库 + 前端 JSON）
       - name: 推送数据到私有仓库
+        id: push_private
         run: |
           cp data/trakt.db /tmp/data-repo/data/trakt.db
           mkdir -p /tmp/data-repo/data/reports
@@ -75,20 +76,16 @@ jobs:
           git add data/ web/public/data/
           if git diff --cached --quiet; then
             echo "数据无变更，跳过提交"
+            echo "changed=false" >> $GITHUB_OUTPUT
           else
             git commit -m "data: 自动更新 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             git push
+            echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      # ⑧ 提交前端数据到公开仓库
-      - name: 提交前端数据变更
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add web/public/data/
-          if git diff --cached --quiet; then
-            echo "前端数据无变更，跳过提交"
-          else
-            git commit -m "data: 自动更新前端数据 $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-            git push
-          fi
+      # ⑧ 数据有变更时触发部署（不提交到公开仓库）
+      - name: 触发部署
+        if: steps.push_private.outputs.changed == 'true'
+        run: gh workflow run deploy.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

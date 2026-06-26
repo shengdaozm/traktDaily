@@ -1,27 +1,48 @@
 <script setup>
-import { inject, ref, computed } from 'vue'
+import { inject, ref, computed, watch } from 'vue'
 import { relativeDate } from '@/utils/format'
 import { traktUrl } from '@/utils/genres'
 
-const recentPlays = inject('recentPlays')
+const recentMeta = inject('recentMeta')
+const fetchRecentPage = inject('fetchRecentPage')
+const getRecentPage = inject('getRecentPage')
 const mediaMap = inject('mediaMap')
 
-const page = ref(1)
 const PAGE_SIZE = 10
+const currentPage = ref(1)
+const loadingPage = ref(false)
 
-const totalPages = computed(() => Math.ceil((recentPlays.value?.length || 0) / PAGE_SIZE))
+const totalPlays = computed(() => recentMeta.value?.total || 0)
+const totalPages = computed(() => Math.ceil(totalPlays.value / PAGE_SIZE))
 
 const pageItems = computed(() => {
-  const plays = recentPlays.value || []
-  const start = (page.value - 1) * PAGE_SIZE
-  return plays.slice(start, start + PAGE_SIZE)
+  const allPageSize = recentMeta.value?.page_size || 100
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  const end = start + PAGE_SIZE
+
+  const bigPageNum = Math.floor(start / allPageSize) + 1
+  const bigPageData = getRecentPage(bigPageNum)
+
+  const localStart = start % allPageSize
+  return bigPageData.slice(localStart, localStart + (end - start))
+})
+
+watch(currentPage, async (page) => {
+  const allPageSize = recentMeta.value?.page_size || 100
+  const bigPageNum = Math.floor(((page - 1) * PAGE_SIZE) / allPageSize) + 1
+  if (!getRecentPage(bigPageNum)) {
+    loadingPage.value = true
+    await fetchRecentPage(bigPageNum)
+    loadingPage.value = false
+  }
 })
 </script>
 
 <template>
   <div>
     <div class="recent-list">
-      <div v-if="!pageItems.length" class="empty-state">
+      <div v-if="loadingPage" class="loading-hint">加载中...</div>
+      <div v-if="!pageItems.length && !loadingPage" class="empty-state">
         <div class="icon">🎬</div><p>暂无观影记录</p>
       </div>
       <a
@@ -55,9 +76,9 @@ const pageItems = computed(() => {
     </div>
 
     <div v-if="totalPages > 1" class="pagination">
-      <button :disabled="page <= 1" @click="page--">← 上一页</button>
-      <span class="page-info">第 {{ page }} / {{ totalPages }} 页</span>
-      <button :disabled="page >= totalPages" @click="page++">下一页 →</button>
+      <button :disabled="currentPage <= 1" @click="currentPage--">← 上一页</button>
+      <span class="page-info">第 {{ currentPage }} / {{ totalPages }} 页</span>
+      <button :disabled="currentPage >= totalPages" @click="currentPage++">下一页 →</button>
     </div>
   </div>
 </template>
@@ -124,6 +145,7 @@ const pageItems = computed(() => {
 .pagination button:disabled { opacity: 0.35; cursor: not-allowed; }
 .page-info { font-size: 0.85rem; color: var(--muted); }
 
+.loading-hint { text-align: center; padding: 20px; color: var(--muted); font-size: 0.85rem; }
 .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
 .empty-state .icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; }
 

@@ -28,9 +28,10 @@ data/*.db-journal
 data/*.db-wal
 data/*.db-shm
 
-# 前端 JSON 数据需要提交到公开仓库（GitHub Pages 部署依赖）
-# 同时备份到私有仓库，此处不再忽略
+# 前端 JSON 数据存储在私有仓库，公开仓库不提交
+# deploy 时从私有仓库拉取数据注入构建产物
+web/public/data/
 
-# 前端构建依赖
+# 前端构建依赖和产物
 web/node_modules/
 web/dist/
