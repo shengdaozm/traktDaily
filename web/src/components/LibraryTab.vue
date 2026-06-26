@@ -242,18 +242,20 @@ const showCounts = computed(() => {
   font-size: 0.86rem; font-weight: 600; color: var(--text-bright);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   transition: color var(--transition);
+  min-height: 1.3em;
 }
 .lib-card:hover .lib-title { color: var(--primary); }
 .lib-meta {
   display: flex; align-items: center; gap: 6px;
   font-size: 0.76rem; color: var(--muted);
+  min-height: 1.3em;
 }
 .lib-type {
   padding: 1px 5px; border-radius: 4px; font-size: 0.68rem; font-weight: 600;
 }
 .lib-type.movie { background: rgba(88,166,255,0.15); color: var(--primary); }
 .lib-type.episode { background: rgba(139,92,246,0.15); color: var(--purple); }
-.lib-genres { display: flex; gap: 4px; flex-wrap: wrap; }
+.lib-genres { display: flex; gap: 4px; flex-wrap: wrap; min-height: 1.5em; }
 .genre-tag {
   font-size: 0.68rem; padding: 1px 6px; border-radius: 8px;
   background: rgba(48,54,61,0.4); color: var(--muted);
@@ -262,6 +264,7 @@ const showCounts = computed(() => {
   font-size: 0.72rem; color: var(--muted);
   display: flex; align-items: center; gap: 4px;
   margin-top: auto;
+  min-height: 1.3em;
 }
 
 .load-more { text-align: center; margin-top: 32px; }
