@@ -51,6 +51,12 @@ jobs:
           TRAKT_USERNAME:  ${{ secrets.TRAKT_USERNAME }}
           TMDB_API_KEY:    ${{ secrets.TMDB_API_KEY }}
 
+      # ⑤b 补全缺失的 TMDB 海报
+      - name: 补全 TMDB 海报
+        run: python -m scripts.backfill_posters
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
       # ⑥ 生成前端 JSON 数据
       - name: 生成前端数据
         run: python -m scripts.render

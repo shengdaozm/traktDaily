@@ -206,7 +206,7 @@ const showCounts = computed(() => {
   object-fit: cover; background: rgba(48,54,61,0.4);
   box-shadow: var(--shadow); border: 1px solid var(--border);
   transition: box-shadow var(--transition), border-color var(--transition);
-  position: absolute; top: 0; left: 0;
+  position: absolute; top: 0; left: 0; display: block;
 }
 .lib-poster.placeholder {
   display: flex; align-items: center; justify-content: center;
