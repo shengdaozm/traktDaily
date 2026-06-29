@@ -31,6 +31,8 @@ jobs:
           mkdir -p data/reports
           cp /tmp/data-repo/data/trakt.db data/trakt.db
           cp -r /tmp/data-repo/data/reports/. data/reports/ 2>/dev/null || true
+          mkdir -p web/public/data
+          cp -r /tmp/data-repo/web/public/data/. web/public/data/ 2>/dev/null || true
 
       # ③ 配置 Python 环境
       - name: 配置 Python
