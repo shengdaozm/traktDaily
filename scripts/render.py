@@ -146,7 +146,7 @@ def run():
     print(f"[Render] 已生成 recent 分页（{total_plays} 条，{total_pages} 页，每页 {PAGE_SIZE} 条）")
 
     # ── 月度海报数据 ──
-    monthly_posters = get_monthly_posters(15)
+    monthly_posters = get_monthly_posters()
     _write_json("monthly_posters.json", monthly_posters)
     print(f"[Render] 已生成 monthly_posters.json（{len(monthly_posters)} 个月）")
 

@@ -600,8 +600,8 @@ def get_diversity_index() -> dict:
     }
 
 
-def get_monthly_posters(limit_per_month: int = 15) -> list[dict]:
-    """按月聚合观影海报，用于前端月度海报墙展示。"""
+def get_monthly_posters() -> list[dict]:
+    """按月聚合全部观影海报，用于前端月度海报墙展示。"""
     conn = get_conn()
     rows = conn.execute("""
         SELECT
@@ -627,14 +627,13 @@ def get_monthly_posters(limit_per_month: int = 15) -> list[dict]:
         ym = r["year_month"]
         if ym not in months:
             months[ym] = {"year_month": ym, "posters": []}
-        if len(months[ym]["posters"]) < limit_per_month:
-            months[ym]["posters"].append({
-                "trakt_id": r["trakt_id"],
-                "title": r["title"],
-                "media_type": r["media_type"],
-                "poster_url": r["poster_url"],
-                "watch_count": r["watch_count"],
-            })
+        months[ym]["posters"].append({
+            "trakt_id": r["trakt_id"],
+            "title": r["title"],
+            "media_type": r["media_type"],
+            "poster_url": r["poster_url"],
+            "watch_count": r["watch_count"],
+        })
 
     return list(months.values())
 

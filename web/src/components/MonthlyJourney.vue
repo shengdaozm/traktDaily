@@ -60,7 +60,7 @@ function selectMonth(idx) {
 onMounted(() => {
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) visible.value = true })
-  }, { threshold: 0.1 })
+  }, { threshold: 0.05 })
   if (sectionRef.value) obs.observe(sectionRef.value)
 })
 </script>
@@ -101,12 +101,12 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="poster-grid">
+        <div class="poster-grid" :class="'grid-' + Math.min(activeMonthData.posters.length, 10)">
           <div
             v-for="(p, i) in activeMonthData.posters"
             :key="p.trakt_id"
             class="poster-item"
-            :style="{ animationDelay: (i * 0.05) + 's' }"
+            :style="{ animationDelay: (i * 0.06) + 's' }"
           >
             <img
               v-if="p.poster_url"
@@ -122,9 +122,9 @@ onMounted(() => {
             <div v-if="p.poster_url" class="poster-img placeholder" style="display:none">
               <span class="placeholder-text">{{ p.title }}</span>
             </div>
-            <div class="poster-info">
+            <div class="poster-overlay">
               <div class="poster-title">{{ p.title }}</div>
-              <div class="poster-count" v-if="p.watch_count > 1">{{ p.watch_count }} 次</div>
+              <div class="poster-count" v-if="p.watch_count > 1">{{ p.watch_count }} 次观看</div>
             </div>
           </div>
         </div>
@@ -157,21 +157,21 @@ onMounted(() => {
 <style scoped>
 .monthly-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 60px 24px;
+  padding: 80px 32px;
   background: linear-gradient(180deg, #0d1117 0%, #1a1208 100%);
 }
-.section-content { max-width: 900px; width: 100%; }
+.section-content { max-width: 1100px; width: 100%; }
 .section-label { font-size: 0.82rem; color: var(--bean-green); text-align: center; margin-bottom: 12px; font-weight: 600; letter-spacing: 2px; }
 
 /* 月份选择条 */
 .month-tabs {
   display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
-  margin-bottom: 28px;
+  margin-bottom: 36px;
 }
 .month-tab {
-  padding: 6px 16px; border-radius: 20px;
+  padding: 8px 20px; border-radius: 24px;
   background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-  color: var(--text-dim); font-size: 0.82rem; cursor: pointer;
+  color: var(--text-dim); font-size: 0.85rem; cursor: pointer;
   transition: all var(--transition);
 }
 .month-tab:hover {
@@ -187,72 +187,85 @@ onMounted(() => {
 }
 
 /* 当前月份展示 */
-.month-display { margin-bottom: 36px; }
+.month-display { margin-bottom: 40px; }
 .month-header {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
 }
 .month-big-label {
-  font-size: 1.8rem; font-weight: 900; color: var(--text-bright);
-  letter-spacing: 2px;
+  font-size: 2.2rem; font-weight: 900; color: var(--text-bright);
+  letter-spacing: 4px;
 }
 .month-stats { display: flex; gap: 8px; }
 .stat-pill {
-  padding: 4px 12px; border-radius: 16px;
+  padding: 5px 14px; border-radius: 16px;
   background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-  font-size: 0.78rem; color: var(--text-dim);
+  font-size: 0.8rem; color: var(--text-dim);
 }
 
-/* 海报网格 */
+/* 海报网格 — 自适应列数 */
 .poster-grid {
-  display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px;
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 }
 .poster-item {
   opacity: 0; animation: fadeInScale 0.5s ease forwards;
-  transition: transform 0.2s ease;
+  transition: transform 0.3s ease;
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-sm);
 }
-.poster-item:hover { transform: translateY(-6px) scale(1.05); }
+.poster-item:hover { transform: translateY(-8px) scale(1.04); z-index: 2; }
 .poster-img {
   width: 100%; aspect-ratio: 2/3; border-radius: var(--radius-sm);
   object-fit: cover; background: rgba(255,255,255,0.04);
   box-shadow: var(--shadow); border: 1px solid var(--border);
-  transition: all var(--transition);
+  transition: all var(--transition); display: block;
 }
 .poster-img.placeholder {
   display: flex; align-items: center; justify-content: center;
-  padding: 8px; text-align: center;
+  padding: 10px; text-align: center;
 }
 .placeholder-text {
-  font-size: 0.72rem; color: var(--text-dim);
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  font-size: 0.78rem; color: var(--text-dim);
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
   overflow: hidden; line-height: 1.4;
 }
 .poster-item:hover .poster-img {
-  box-shadow: var(--shadow-hover);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 24px rgba(168,197,160,0.15);
   border-color: var(--border-bright);
 }
-.poster-info { padding: 6px 2px 0; }
+
+/* hover 信息浮层 */
+.poster-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 20px 12px 12px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.85) 100%);
+  opacity: 0; transition: opacity var(--transition);
+  pointer-events: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+.poster-item:hover .poster-overlay { opacity: 1; }
 .poster-title {
-  font-size: 0.72rem; font-weight: 600; color: var(--text-bright);
+  font-size: 0.78rem; font-weight: 700; color: var(--text-bright);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 2px;
 }
 .poster-count {
-  font-size: 0.65rem; color: var(--bean-green); font-weight: 600;
+  font-size: 0.68rem; color: var(--bean-green); font-weight: 600;
 }
 
 /* 迷你趋势图 */
 .mini-trend { margin-top: 8px; }
 .trend-bars {
-  display: flex; gap: 4px; align-items: flex-end;
-  height: 80px; padding: 0 4px;
+  display: flex; gap: 6px; align-items: flex-end;
+  height: 90px; padding: 0 4px;
 }
 .trend-bar-wrapper {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  gap: 4px; cursor: pointer; height: 100%; justify-content: flex-end;
+  gap: 6px; cursor: pointer; height: 100%; justify-content: flex-end;
   transition: all var(--transition);
 }
 .trend-bar {
-  width: 100%; max-width: 28px; border-radius: 4px 4px 0 0;
+  width: 100%; max-width: 32px; border-radius: 5px 5px 0 0;
   background: linear-gradient(180deg, rgba(168,197,160,0.5), rgba(168,197,160,0.1));
   transition: all var(--transition);
   min-height: 4px;
@@ -265,19 +278,20 @@ onMounted(() => {
   box-shadow: 0 0 12px rgba(212,168,87,0.3);
 }
 .trend-bar-label {
-  font-size: 0.62rem; color: var(--text-dim);
+  font-size: 0.65rem; color: var(--text-dim);
   white-space: nowrap;
 }
 
 @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
 @media (max-width: 768px) {
-  .poster-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .month-big-label { font-size: 1.3rem; }
+  .poster-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .month-big-label { font-size: 1.5rem; }
   .month-stats { flex-wrap: wrap; }
-  .stat-pill { font-size: 0.72rem; padding: 3px 10px; }
+  .stat-pill { font-size: 0.72rem; padding: 4px 10px; }
+  .monthly-section { padding: 60px 16px; }
 }
 @media (max-width: 480px) {
-  .poster-grid { grid-template-columns: repeat(3, 1fr); }
+  .poster-grid { grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 8px; }
 }
 </style>
