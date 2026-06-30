@@ -97,12 +97,34 @@ export function useTraktData() {
   const dailyGenreStats = computed(() => summary.value?.daily_genre_stats || [])
   const genreStats = computed(() => summary.value?.genre_stats || [])
 
+  const hourlyStats = computed(() => summary.value?.hourly_stats || [])
+  const weekdayStats = computed(() => summary.value?.weekday_stats || [])
+  const bingeStats = computed(() => summary.value?.binge_stats || {})
+  const ratingPreference = computed(() => summary.value?.rating_preference || {})
+  const countryStats = computed(() => summary.value?.country_stats || [])
+  const freshnessStats = computed(() => summary.value?.freshness_stats || {})
+  const watchPattern = computed(() => summary.value?.watch_pattern || {})
+  const diversityIndex = computed(() => summary.value?.diversity_index || {})
+  const runtimePreference = computed(() => summary.value?.runtime_preference || {})
+  const firstWatched = computed(() => summary.value?.first_watched || null)
+  const lastWatched = computed(() => summary.value?.last_watched || null)
+
+  const availableYears = computed(() => {
+    const stats = monthlyStats.value || []
+    const years = new Set()
+    stats.forEach(s => { if (s.year_month) years.add(parseInt(s.year_month.substring(0, 4))) })
+    return [...years].sort((a, b) => b - a)
+  })
+
   if (!loaded) loadData()
 
   return {
     summary, mediaList, topMedia, persona, recentMeta, loading, error,
     mediaMap, lastUpdated, totalStats,
     monthlyStats, dailyGenreStats, genreStats,
+    hourlyStats, weekdayStats, bingeStats, ratingPreference,
+    countryStats, freshnessStats, watchPattern, diversityIndex,
+    runtimePreference, firstWatched, lastWatched, availableYears,
     loadData, fetchRecentPage, getRecentPage,
   }
 }

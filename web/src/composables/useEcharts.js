@@ -64,7 +64,7 @@ export function useECharts(getOptionFn, watchSources = []) {
 }
 
 export const TOOLTIP_STYLE = {
-  backgroundColor: 'rgba(22,27,36,0.95)',
-  borderColor: 'rgba(48,54,61,0.6)',
-  textStyle: { color: '#c9d1d9', fontSize: 13 },
+  backgroundColor: 'rgba(17,21,26,0.95)',
+  borderColor: 'rgba(168,197,160,0.2)',
+  textStyle: { color: '#c4c9ce', fontSize: 13 },
 }

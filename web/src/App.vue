@@ -1,20 +1,23 @@
 <script setup>
 import { ref, provide, onMounted, onUnmounted } from 'vue'
 import { useTraktData } from '@/composables/useTraktData'
-import HeroIntro from '@/components/HeroIntro.vue'
-import TotalStats from '@/components/TotalStats.vue'
-import PersonaSection from '@/components/PersonaSection.vue'
-import MonthlyJourney from '@/components/MonthlyJourney.vue'
-import TopWatched from '@/components/TopWatched.vue'
-import GenreSection from '@/components/GenreSection.vue'
-import HeatmapSection from '@/components/HeatmapSection.vue'
-import LibrarySection from '@/components/LibrarySection.vue'
-import ClosingSection from '@/components/ClosingSection.vue'
+import WelcomePage from '@/components/WelcomePage.vue'
+import OpeningNarrative from '@/components/OpeningNarrative.vue'
+import CoreOverview from '@/components/CoreOverview.vue'
+import PreferenceSection from '@/components/PreferenceSection.vue'
+import BehaviorHabits from '@/components/BehaviorHabits.vue'
+import PersonaProfile from '@/components/PersonaProfile.vue'
+import AnnualRankings from '@/components/AnnualRankings.vue'
+import SharePoster from '@/components/SharePoster.vue'
+import YearArchive from '@/components/YearArchive.vue'
 
 const {
   summary, mediaList, topMedia, persona, recentMeta, loading, error,
   mediaMap, lastUpdated, totalStats,
   monthlyStats, dailyGenreStats, genreStats,
+  hourlyStats, weekdayStats, bingeStats, ratingPreference,
+  countryStats, freshnessStats, watchPattern, diversityIndex,
+  runtimePreference, firstWatched, lastWatched, availableYears,
 } = useTraktData()
 
 provide('summary', summary)
@@ -26,6 +29,18 @@ provide('totalStats', totalStats)
 provide('monthlyStats', monthlyStats)
 provide('dailyGenreStats', dailyGenreStats)
 provide('genreStats', genreStats)
+provide('hourlyStats', hourlyStats)
+provide('weekdayStats', weekdayStats)
+provide('bingeStats', bingeStats)
+provide('ratingPreference', ratingPreference)
+provide('countryStats', countryStats)
+provide('freshnessStats', freshnessStats)
+provide('watchPattern', watchPattern)
+provide('diversityIndex', diversityIndex)
+provide('runtimePreference', runtimePreference)
+provide('firstWatched', firstWatched)
+provide('lastWatched', lastWatched)
+provide('availableYears', availableYears)
 
 const resizeCallbacks = ref([])
 function registerResize(fn) { resizeCallbacks.value.push(fn) }
@@ -38,16 +53,20 @@ provide('unregisterResize', unregisterResize)
 
 const scrollProgress = ref(0)
 const activeSection = ref(0)
+const selectedYear = ref(new Date().getFullYear())
+
+provide('selectedYear', selectedYear)
+
 const sections = [
-  { id: 'hero', label: '封面' },
-  { id: 'stats', label: '总览' },
+  { id: 'welcome', label: '封面' },
+  { id: 'narrative', label: '开篇' },
+  { id: 'overview', label: '总览' },
+  { id: 'preference', label: '偏好' },
+  { id: 'behavior', label: '行为' },
   { id: 'persona', label: '画像' },
-  { id: 'monthly', label: '月度' },
-  { id: 'top', label: '排行' },
-  { id: 'genre', label: '类型' },
-  { id: 'heatmap', label: '日历' },
-  { id: 'library', label: '剧库' },
-  { id: 'closing', label: '总结' },
+  { id: 'rankings', label: '榜单' },
+  { id: 'poster', label: '海报' },
+  { id: 'archive', label: '历年' },
 ]
 
 function handleScroll() {
@@ -95,7 +114,7 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
     <template v-if="loading">
       <div class="loading-screen">
         <div class="loading-icon">🎬</div>
-        <p>正在生成你的观影报告...</p>
+        <p>正在生成你的观影宇宙...</p>
       </div>
     </template>
 
@@ -108,35 +127,34 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
     </template>
 
     <template v-else>
-      <div :id="`section-0`"><HeroIntro :media-list="mediaList" /></div>
-      <div :id="`section-1`"><TotalStats /></div>
-      <div :id="`section-2`"><PersonaSection /></div>
-      <div :id="`section-3`"><MonthlyJourney /></div>
-      <div :id="`section-4`"><TopWatched /></div>
-      <div :id="`section-5`"><GenreSection /></div>
-      <div :id="`section-6`"><HeatmapSection /></div>
-      <div :id="`section-7`"><LibrarySection /></div>
-      <div :id="`section-8`"><ClosingSection /></div>
+      <div :id="`section-0`"><WelcomePage :media-list="mediaList" @start="scrollToSection(1)" /></div>
+      <div :id="`section-1`"><OpeningNarrative /></div>
+      <div :id="`section-2`"><CoreOverview @navigate="scrollToSection" /></div>
+      <div :id="`section-3`"><PreferenceSection /></div>
+      <div :id="`section-4`"><BehaviorHabits /></div>
+      <div :id="`section-5`"><PersonaProfile /></div>
+      <div :id="`section-6`"><AnnualRankings /></div>
+      <div :id="`section-7`"><SharePoster /></div>
+      <div :id="`section-8`"><YearArchive /></div>
     </template>
   </div>
 </template>
 
 <style scoped>
-.app { min-height: 100vh; }
+.app { min-height: 100vh; background: var(--cinema-black); }
 .scroll-progress {
   position: fixed; top: 0; left: 0; height: 2px;
-  background: linear-gradient(90deg, var(--primary), var(--accent), var(--accent-warm));
+  background: linear-gradient(90deg, var(--bean-green), var(--bean-green-bright));
   z-index: 999; transition: width 0.05s linear;
 }
 .loading-screen {
   min-height: 100vh; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 16px;
-  background: #0d1117; color: var(--text-dim);
+  background: var(--cinema-black); color: var(--text-dim);
 }
-.loading-icon { font-size: 4rem; animation: pulse 1.5s ease-in-out infinite; }
+.loading-icon { font-size: 4rem; animation: breathe 2s ease-in-out infinite; }
 .error-detail {
   font-size: 0.85rem; color: var(--text-dim); max-width: 400px;
   text-align: center; word-break: break-all; margin-top: 8px;
 }
-@keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 </style>

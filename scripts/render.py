@@ -23,6 +23,15 @@ from scripts.db import (
     get_daily_genre_stats,
     get_all_plays,
     get_top_media,
+    get_hourly_stats,
+    get_weekday_stats,
+    get_binge_stats,
+    get_rating_preference,
+    get_country_stats,
+    get_freshness_stats,
+    get_watch_pattern,
+    get_diversity_index,
+    get_runtime_preference,
     ensure_dirs,
 )
 
@@ -53,6 +62,22 @@ def run():
     total_movies = sum(m.get("movie_count", 0) for m in monthly_stats)
     total_episodes = sum(m.get("episode_count", 0) for m in monthly_stats)
 
+    # ── 行为分析数据 ──
+    hourly_stats = get_hourly_stats()
+    weekday_stats = get_weekday_stats()
+    binge_stats = get_binge_stats()
+    rating_pref = get_rating_preference()
+    country_stats = get_country_stats()
+    freshness_stats = get_freshness_stats()
+    watch_pattern = get_watch_pattern()
+    diversity = get_diversity_index()
+    runtime_pref = get_runtime_preference()
+
+    # 首末观影记录
+    all_plays_for_range = get_all_plays()
+    first_watched = all_plays_for_range[-1] if all_plays_for_range else None
+    last_watched = all_plays_for_range[0] if all_plays_for_range else None
+
     summary = {
         "total_plays": get_plays_count(),
         "total_minutes": total_minutes,
@@ -61,6 +86,29 @@ def run():
         "monthly_stats": monthly_stats,
         "genre_stats": get_genre_stats(),
         "daily_genre_stats": get_daily_genre_stats(),
+        # 行为分析
+        "hourly_stats": hourly_stats,
+        "weekday_stats": weekday_stats,
+        "binge_stats": binge_stats,
+        "rating_preference": rating_pref,
+        "country_stats": country_stats,
+        "freshness_stats": freshness_stats,
+        "watch_pattern": watch_pattern,
+        "diversity_index": diversity,
+        "runtime_preference": runtime_pref,
+        # 首末观影
+        "first_watched": {
+            "title": first_watched["title"] if first_watched else "",
+            "watched_at": first_watched["watched_at"] if first_watched else "",
+            "poster_url": first_watched.get("poster_url") if first_watched else None,
+            "media_type": first_watched["media_type"] if first_watched else "",
+        } if first_watched else None,
+        "last_watched": {
+            "title": last_watched["title"] if last_watched else "",
+            "watched_at": last_watched["watched_at"] if last_watched else "",
+            "poster_url": last_watched.get("poster_url") if last_watched else None,
+            "media_type": last_watched["media_type"] if last_watched else "",
+        } if last_watched else None,
     }
 
     _write_json("summary.json", summary)

@@ -1,9 +1,9 @@
 export const GENRE_COLORS = [
-  '#58a6ff', '#f0c040', '#3fb950', '#8b5cf6', '#f97583',
-  '#79c0ff', '#d2a8ff', '#56d4dd', '#e3b341', '#db61a2',
-  '#7ee787', '#ffa657', '#a5d6ff', '#ff7b72', '#b392f0',
-  '#85e89d', '#ffdf5d', '#f78166', '#96d0ff', '#d1bc6f',
-  '#c9d1d9',
+  '#a8c5a0', '#d4a857', '#6b8caf', '#9a8aaf', '#d4a5a5',
+  '#7a9a72', '#c4dcbc', '#6a9a92', '#c4924a', '#c4a0a8',
+  '#8ab07e', '#b89a5a', '#5a7a9a', '#a87a8a', '#7a8a9a',
+  '#9ab088', '#d4b85a', '#a87854', '#6a8ab0', '#a0a07a',
+  '#c4c9ce',
 ]
 
 export const GENRE_ZH = {
