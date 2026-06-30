@@ -8,6 +8,20 @@ const selectedYear = inject('selectedYear')
 
 const visible = ref(false)
 const sectionRef = ref(null)
+const cardRefs = ref([])
+
+function onTilt(e, idx) {
+  const el = cardRefs.value[idx]
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  const dx = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2)
+  const dy = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2)
+  el.style.transform = `perspective(800px) rotateX(${-dy * 10}deg) rotateY(${dx * 10}deg) translateY(-6px)`
+}
+function onLeave(idx) {
+  const el = cardRefs.value[idx]
+  if (el) el.style.transform = ''
+}
 
 const yearStats = computed(() => {
   return (availableYears.value || []).map(y => {
@@ -47,10 +61,13 @@ onMounted(() => {
 
       <div class="year-grid stagger" :class="{ visible }">
         <div
-          v-for="ys in yearStats"
+          v-for="(ys, i) in yearStats"
           :key="ys.year"
-          class="year-card bean-card"
+          class="year-card bean-card glow-border"
           :class="{ current: ys.isCurrent }"
+          :ref="el => cardRefs[i] = el"
+          @mousemove="onTilt($event, i)"
+          @mouseleave="onLeave(i)"
           @click="selectYear(ys.year)"
         >
           <div class="year-num">{{ ys.year }}</div>
@@ -105,6 +122,8 @@ onMounted(() => {
 .year-card {
   padding: 28px 20px; cursor: pointer; position: relative;
   display: flex; flex-direction: column; align-items: center; gap: 12px;
+  transition: transform 0.15s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  will-change: transform; overflow: hidden;
 }
 .year-card.current {
   border-color: rgba(168,197,160,0.4);

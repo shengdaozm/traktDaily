@@ -1,6 +1,7 @@
 <script setup>
 import { inject, ref, computed, onMounted, watch } from 'vue'
 import { useECharts, TOOLTIP_STYLE } from '@/composables/useEcharts'
+import FloatingLights from '@/components/FloatingLights.vue'
 
 const persona = inject('persona')
 const diversityIndex = inject('diversityIndex')
@@ -48,7 +49,7 @@ const { chartRef, resize } = useECharts(() => {
         itemStyle: { color: '#c4dcbc' },
         symbolSize: 5,
       }],
-      animationDuration: 1500, animationEasing: 'cubicOut', animationDelay: 300,
+      animationDuration: 2000, animationEasing: 'elasticOut', animationDelay: 300,
     }],
   }
 }, [radarData])
@@ -113,6 +114,7 @@ onMounted(() => {
 
 <template>
   <section ref="sectionRef" class="persona-section" v-if="persona">
+    <FloatingLights :count="3" />
     <div class="bg-glow" />
     <div class="section-content">
       <p class="section-label reveal-up" :class="{ visible }">🧬 个人年度观影画像</p>

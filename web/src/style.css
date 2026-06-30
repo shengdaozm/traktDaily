@@ -252,6 +252,149 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ═══════════════════════════════════════ */
+/* 鼠标跟随光晕                              */
+/* ═══════════════════════════════════════ */
+.mouse-glow {
+  position: fixed; width: 300px; height: 300px;
+  border-radius: 50%; pointer-events: none; z-index: 9997;
+  background: radial-gradient(circle, rgba(168,197,160,0.08) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s ease;
+  mix-blend-mode: screen;
+}
+
+/* ═══════════════════════════════════════ */
+/* 点击涟漪                                  */
+/* ═══════════════════════════════════════ */
+.ripple-effect {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle, rgba(168,197,160,0.4) 0%, transparent 70%);
+  width: 10px; height: 10px;
+  transform: translate(-50%, -50%) scale(0);
+  animation: ripple-expand 0.8s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes ripple-expand {
+  to { transform: translate(-50%, -50%) scale(40); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════ */
+/* 3D 倾斜卡片                               */
+/* ═══════════════════════════════════════ */
+.tilt-card {
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease, box-shadow 0.3s ease;
+  will-change: transform;
+}
+.tilt-card:hover {
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(168,197,160,0.15);
+}
+.tilt-card .tilt-content {
+  transform: translateZ(30px);
+}
+
+/* ═══════════════════════════════════════ */
+/* 滚动粒子尾迹进度条                        */
+/* ═══════════════════════════════════════ */
+.scroll-progress {
+  position: fixed; top: 0; left: 0; height: 3px;
+  background: linear-gradient(90deg, var(--bean-green), var(--bean-green-bright), var(--warm-amber));
+  z-index: 999; transition: width 0.05s linear;
+  box-shadow: 0 0 10px rgba(168,197,160,0.6), 0 0 20px rgba(168,197,160,0.3);
+}
+.scroll-progress::after {
+  content: ''; position: absolute; right: 0; top: 50%;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bean-green-bright);
+  transform: translateY(-50%);
+  box-shadow: 0 0 15px var(--bean-green), 0 0 30px var(--bean-green);
+  animation: trail-pulse 1s ease-in-out infinite;
+}
+@keyframes trail-pulse {
+  0%, 100% { transform: translateY(-50%) scale(1); opacity: 1; }
+  50% { transform: translateY(-50%) scale(1.5); opacity: 0.7; }
+}
+
+/* ═══════════════════════════════════════ */
+/* 文字渐变流光                              */
+/* ═══════════════════════════════════════ */
+.shimmer-text {
+  background: linear-gradient(90deg,
+    var(--bean-green) 0%, var(--bean-green-bright) 40%,
+    var(--warm-amber) 50%, var(--bean-green-bright) 60%,
+    var(--bean-green) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: shimmer-flow 3s linear infinite;
+}
+@keyframes shimmer-flow {
+  to { background-position: 200% center; }
+}
+
+/* ═══════════════════════════════════════ */
+/* 数字爆炸粒子                             */
+/* ═══════════════════════════════════════ */
+.number-burst {
+  position: relative; display: inline-block;
+}
+.burst-particle {
+  position: absolute; width: 4px; height: 4px;
+  border-radius: 50%; pointer-events: none;
+  background: var(--bean-green-bright);
+  animation: burst-out 0.8s ease-out forwards;
+}
+@keyframes burst-out {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--bx), var(--by)) scale(0); }
+}
+
+/* ═══════════════════════════════════════ */
+/* 3D 页面翻转入场                           */
+/* ═══════════════════════════════════════ */
+.page-3d-enter {
+  opacity: 0;
+  transform: perspective(1000px) rotateY(15deg) translateZ(-50px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.page-3d-enter.visible {
+  opacity: 1;
+  transform: perspective(1000px) rotateY(0) translateZ(0);
+}
+
+/* ═══════════════════════════════════════ */
+/* 视差容器                                  */
+/* ═══════════════════════════════════════ */
+.parallax-layer {
+  will-change: transform;
+  transition: transform 0.1s ease-out;
+}
+
+/* ═══════════════════════════════════════ */
+/* 卡片发光边框扫光                          */
+/* ═══════════════════════════════════════ */
+.glow-border {
+  position: relative; overflow: hidden;
+}
+.glow-border::before {
+  content: ''; position: absolute; inset: -2px;
+  border-radius: inherit; padding: 2px;
+  background: conic-gradient(from var(--angle, 0deg),
+    transparent 0%, rgba(168,197,160,0.5) 10%,
+    transparent 20%, transparent 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: border-rotate 4s linear infinite;
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.glow-border:hover::before { opacity: 1; }
+@property --angle {
+  syntax: '<angle>'; initial-value: 0deg; inherits: false;
+}
+@keyframes border-rotate {
+  to { --angle: 360deg; }
+}
+
+/* ═══════════════════════════════════════ */
 /* 响应式                                    */
 /* ═══════════════════════════════════════ */
 @media (max-width: 768px) {
@@ -259,4 +402,5 @@ a { color: inherit; text-decoration: none; }
   .narrative { font-size: 0.92rem; margin-bottom: 18px; }
   .nav-dots { display: none; }
   .section-label { font-size: 0.75rem; }
+  .mouse-glow { display: none; }
 }

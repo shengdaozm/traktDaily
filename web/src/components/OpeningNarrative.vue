@@ -1,6 +1,7 @@
 <script setup>
 import { inject, ref, computed, onMounted, watch } from 'vue'
 import { useCountUp } from '@/composables/useTextReveal'
+import FloatingLights from '@/components/FloatingLights.vue'
 
 const monthlyStats = inject('monthlyStats')
 const firstWatched = inject('firstWatched')
@@ -61,6 +62,7 @@ onMounted(() => {
 
 <template>
   <section ref="sectionRef" class="narrative-section">
+    <FloatingLights :count="3" />
     <div class="bg-glow" />
     <div class="section-content">
       <p class="section-label reveal-up" :class="{ visible }">{{ selectedYear }} · 光影之旅</p>

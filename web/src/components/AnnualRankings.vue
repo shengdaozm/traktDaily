@@ -37,6 +37,20 @@ function getUrl(m) {
   return traktUrl(m, mediaMap)
 }
 
+const top3Refs = ref([])
+function onTilt(e, idx) {
+  const el = top3Refs.value[idx]
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  const dx = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2)
+  const dy = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2)
+  el.style.transform = `perspective(800px) rotateX(${-dy * 15}deg) rotateY(${dx * 15}deg) translateY(-8px)`
+}
+function onLeave(idx) {
+  const el = top3Refs.value[idx]
+  if (el) el.style.transform = ''
+}
+
 onMounted(() => {
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) visible.value = true })
@@ -56,8 +70,11 @@ onMounted(() => {
       <!-- TOP 3 -->
       <div class="top3-block stagger" :class="{ visible }">
         <div v-for="(m, i) in top3" :key="m.trakt_id"
-          class="top3-card bean-card"
+          class="top3-card bean-card glow-border"
           :class="['rank-' + (i + 1)]"
+          :ref="el => top3Refs[i] = el"
+          @mousemove="onTilt($event, i)"
+          @mouseleave="onLeave(i)"
         >
           <div class="rank-medal">{{ ['🥇', '🥈', '🥉'][i] }}</div>
           <a :href="getUrl(m)" target="_blank" class="poster-link">
@@ -202,9 +219,9 @@ onMounted(() => {
 }
 .wall-card {
   position: relative; opacity: 0; animation: fadeInScale 0.5s ease forwards;
-  transition: transform var(--transition);
+  transition: transform 0.2s ease, filter 0.3s ease;
 }
-.wall-card:hover { transform: translateY(-6px); }
+.wall-card:hover { transform: translateY(-8px) scale(1.05); filter: brightness(1.15); z-index: 2; }
 .wall-rank {
   position: absolute; top: 5px; left: 5px; z-index: 1;
   width: 24px; height: 24px; border-radius: 50%;

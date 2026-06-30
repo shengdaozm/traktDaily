@@ -1,6 +1,8 @@
 <script setup>
 import { inject, ref, computed, onMounted, watch } from 'vue'
 import ParticleBg from '@/components/ParticleBg.vue'
+import FloatingLights from '@/components/FloatingLights.vue'
+import DynamicBg from '@/components/DynamicBg.vue'
 
 const persona = inject('persona')
 const monthlyStats = inject('monthlyStats')
@@ -199,7 +201,9 @@ onMounted(() => {
 
 <template>
   <section ref="sectionRef" class="poster-section">
+    <DynamicBg />
     <ParticleBg :density="40" color="rgba(168, 197, 160, " />
+    <FloatingLights :count="3" />
     <div class="section-content">
       <p class="section-label reveal-up" :class="{ visible }">年度观影海报</p>
       <p class="narrative reveal-up" :class="{ visible }">

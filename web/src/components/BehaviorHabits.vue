@@ -53,8 +53,11 @@ const { chartRef: hourChartRef, resize: hourResize } = useECharts(() => {
         value: v,
         itemStyle: { borderRadius: [4, 4, 0, 0] },
       })),
+      animationDelay: (idx) => idx * 60,
+      animationDuration: 800,
+      animationEasing: 'elasticOut',
     }],
-    animationDuration: 1200, animationEasing: 'cubicOut', animationDelay: 200,
+    animationDuration: 0,
   }
 }, [hourData])
 
@@ -89,6 +92,9 @@ const { chartRef: weekdayChartRef, resize: weekdayResize } = useECharts(() => {
           colorStops: [{ offset: 0, color: 'rgba(107,140,175,0.8)' }, { offset: 1, color: 'rgba(107,140,175,0.1)' }] },
         borderRadius: [6, 6, 0, 0],
       },
+      animationDelay: (idx) => idx * 80,
+      animationDuration: 1000,
+      animationEasing: 'elasticOut',
     }],
     animationDuration: 1000, animationEasing: 'cubicOut', animationDelay: 200,
   }

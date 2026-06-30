@@ -41,14 +41,19 @@ const { chartRef: genreChartRef, resize: genreResize } = useECharts(() => {
     series: [{
       type: 'pie', radius: ['38%', '70%'], center: ['50%', '50%'],
       padAngle: 3,
+      startAngle: 90,
       itemStyle: { borderRadius: 8, borderColor: 'rgba(10,12,15,0.8)', borderWidth: 3 },
       label: { color: '#c4c9ce', fontSize: 12, formatter: '{b}\n{d}%' },
       labelLine: { lineStyle: { color: 'rgba(255,255,255,0.15)' } },
-      emphasis: { label: { fontSize: 14, fontWeight: 'bold' }, itemStyle: { shadowBlur: 16, shadowColor: 'rgba(168,197,160,0.3)' } },
+      emphasis: { label: { fontSize: 14, fontWeight: 'bold' }, itemStyle: { shadowBlur: 20, shadowColor: 'rgba(168,197,160,0.4)' }, scale: true, scaleSize: 8 },
       data: d.labels.map((l, i) => ({
         name: l, value: d.minutes[i],
         itemStyle: { color: GENRE_COLORS[i % GENRE_COLORS.length] },
       })),
+      animationType: 'expansion',
+      animationDuration: 1800,
+      animationEasing: 'cubicOut',
+      animationDelay: (idx) => idx * 150,
     }],
     animationDuration: 1500, animationEasing: 'cubicOut', animationDelay: 300,
   }
@@ -94,6 +99,9 @@ const { chartRef: countryChartRef, resize: countryResize } = useECharts(() => {
       },
       emphasis: { itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
         colorStops: [{ offset: 0, color: 'rgba(168,197,160,0.5)' }, { offset: 1, color: 'rgba(196,220,188,1)' }] } } },
+      animationDelay: (idx) => idx * 100,
+      animationDuration: 1000,
+      animationEasing: 'elasticOut',
     }],
     animationDuration: 1200, animationEasing: 'cubicOut', animationDelay: 200,
   }
@@ -126,6 +134,9 @@ const { chartRef: eraChartRef, resize: eraResize } = useECharts(() => {
           colorStops: [{ offset: 0, color: 'rgba(212,168,87,0.8)' }, { offset: 1, color: 'rgba(212,168,87,0.1)' }] },
         borderRadius: [6, 6, 0, 0],
       },
+      animationDelay: (idx) => idx * 100,
+      animationDuration: 1000,
+      animationEasing: 'elasticOut',
     }],
     animationDuration: 1200, animationEasing: 'cubicOut', animationDelay: 200,
   }

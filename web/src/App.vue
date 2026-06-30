@@ -1,6 +1,8 @@
 <script setup>
-import { ref, provide, onMounted, onUnmounted } from 'vue'
+import { ref, provide, onMounted, onUnmounted, reactive } from 'vue'
 import { useTraktData } from '@/composables/useTraktData'
+import { useVisualEffects } from '@/composables/useVisualEffects'
+import FilmGrain from '@/components/FilmGrain.vue'
 import WelcomePage from '@/components/WelcomePage.vue'
 import OpeningNarrative from '@/components/OpeningNarrative.vue'
 import CoreOverview from '@/components/CoreOverview.vue'
@@ -51,8 +53,12 @@ function unregisterResize(fn) {
 provide('registerResize', registerResize)
 provide('unregisterResize', unregisterResize)
 
+const { mouseX, mouseY, glowVisible } = useVisualEffects()
+provide('useVisualEffects', useVisualEffects)
+
 const scrollProgress = ref(0)
 const activeSection = ref(0)
+const parallaxY = ref(0)
 const selectedYear = ref(new Date().getFullYear())
 
 provide('selectedYear', selectedYear)
@@ -73,6 +79,7 @@ function handleScroll() {
   const scrollTop = window.scrollY
   const docHeight = document.documentElement.scrollHeight - window.innerHeight
   scrollProgress.value = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
+  parallaxY.value = scrollTop * 0.3
 
   const winH = window.innerHeight
   let bestIdx = 0
@@ -100,8 +107,20 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
 <template>
   <div class="app">
+    <!-- 鼠标跟随光晕 -->
+    <div
+      class="mouse-glow"
+      v-if="glowVisible"
+      :style="{ left: mouseX + 'px', top: mouseY + 'px' }"
+    />
+
+    <!-- 胶片噪点 -->
+    <FilmGrain :opacity="0.035" />
+
+    <!-- 滚动进度条 -->
     <div class="scroll-progress" :style="{ width: scrollProgress + '%' }" />
 
+    <!-- 侧边导航点 -->
     <nav class="nav-dots" v-if="!loading && !error">
       <button
         v-for="(s, i) in sections" :key="i"
@@ -142,11 +161,6 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
 <style scoped>
 .app { min-height: 100vh; background: var(--cinema-black); }
-.scroll-progress {
-  position: fixed; top: 0; left: 0; height: 2px;
-  background: linear-gradient(90deg, var(--bean-green), var(--bean-green-bright));
-  z-index: 999; transition: width 0.05s linear;
-}
 .loading-screen {
   min-height: 100vh; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 16px;
