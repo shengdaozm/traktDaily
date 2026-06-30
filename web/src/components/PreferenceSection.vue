@@ -39,23 +39,27 @@ const { chartRef: genreChartRef, resize: genreResize } = useECharts(() => {
       formatter(p) { return `${p.name}<br/>${p.value} 小时 (${p.percent}%)` }
     },
     series: [{
-      type: 'pie', radius: ['38%', '70%'], center: ['50%', '50%'],
-      padAngle: 3,
+      type: 'pie', radius: ['40%', '68%'], center: ['50%', '50%'],
+      padAngle: 2,
       startAngle: 90,
-      itemStyle: { borderRadius: 8, borderColor: 'rgba(10,12,15,0.8)', borderWidth: 3 },
-      label: { color: '#c4c9ce', fontSize: 12, formatter: '{b}\n{d}%' },
-      labelLine: { lineStyle: { color: 'rgba(255,255,255,0.15)' } },
-      emphasis: { label: { fontSize: 14, fontWeight: 'bold' }, itemStyle: { shadowBlur: 20, shadowColor: 'rgba(168,197,160,0.4)' }, scale: true, scaleSize: 8 },
+      itemStyle: { borderRadius: 6, borderColor: 'rgba(14,16,20,0.8)', borderWidth: 2 },
+      label: { color: '#C8C8C8', fontSize: 12, formatter: '{b}\n{d}%' },
+      labelLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+      emphasis: { label: { fontSize: 13, fontWeight: 'bold' }, scale: true, scaleSize: 6 },
       data: d.labels.map((l, i) => ({
         name: l, value: d.minutes[i],
-        itemStyle: { color: GENRE_COLORS[i % GENRE_COLORS.length] },
+        itemStyle: {
+          color: i === 0
+            ? '#86A89C'
+            : `rgba(140,148,159,${0.25 + (1 - i / d.labels.length) * 0.5})`,
+        },
       })),
       animationType: 'expansion',
-      animationDuration: 1800,
+      animationDuration: 1200,
       animationEasing: 'cubicOut',
-      animationDelay: (idx) => idx * 150,
+      animationDelay: (idx) => idx * 100,
     }],
-    animationDuration: 1500, animationEasing: 'cubicOut', animationDelay: 300,
+    animationDuration: 1000, animationEasing: 'cubicOut', animationDelay: 200,
   }
 }, [genreData])
 
@@ -90,20 +94,20 @@ const { chartRef: countryChartRef, resize: countryResize } = useECharts(() => {
       axisLabel: { color: '#c4c9ce', fontSize: 12 },
       axisTick: { show: false } },
     series: [{
-      type: 'bar', barMaxWidth: 20,
+      type: 'bar', barMaxWidth: 16,
       data: d.map(x => x.count).reverse(),
       itemStyle: {
         color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
-          colorStops: [{ offset: 0, color: 'rgba(168,197,160,0.3)' }, { offset: 1, color: 'rgba(168,197,160,0.8)' }] },
-        borderRadius: [0, 6, 6, 0],
+          colorStops: [{ offset: 0, color: 'rgba(134,168,156,0.2)' }, { offset: 1, color: 'rgba(134,168,156,0.6)' }] },
+        borderRadius: [0, 4, 4, 0],
       },
       emphasis: { itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
-        colorStops: [{ offset: 0, color: 'rgba(168,197,160,0.5)' }, { offset: 1, color: 'rgba(196,220,188,1)' }] } } },
-      animationDelay: (idx) => idx * 100,
-      animationDuration: 1000,
-      animationEasing: 'elasticOut',
+        colorStops: [{ offset: 0, color: 'rgba(134,168,156,0.4)' }, { offset: 1, color: 'rgba(134,168,156,0.8)' }] } } },
+      animationDelay: (idx) => idx * 80,
+      animationDuration: 800,
+      animationEasing: 'cubicOut',
     }],
-    animationDuration: 1200, animationEasing: 'cubicOut', animationDelay: 200,
+    animationDuration: 800, animationEasing: 'cubicOut', animationDelay: 200,
   }
 }, [countryData])
 
@@ -127,18 +131,17 @@ const { chartRef: eraChartRef, resize: eraResize } = useECharts(() => {
       axisLabel: { color: '#6a6f78' },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } } },
     series: [{
-      type: 'bar', barMaxWidth: 36,
+      type: 'bar', barMaxWidth: 32,
       data: d.map(x => x.count),
       itemStyle: {
-        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [{ offset: 0, color: 'rgba(212,168,87,0.8)' }, { offset: 1, color: 'rgba(212,168,87,0.1)' }] },
-        borderRadius: [6, 6, 0, 0],
+        color: 'rgba(140,148,159,0.4)',
+        borderRadius: [4, 4, 0, 0],
       },
-      animationDelay: (idx) => idx * 100,
-      animationDuration: 1000,
-      animationEasing: 'elasticOut',
+      animationDelay: (idx) => idx * 80,
+      animationDuration: 800,
+      animationEasing: 'cubicOut',
     }],
-    animationDuration: 1200, animationEasing: 'cubicOut', animationDelay: 200,
+    animationDuration: 800, animationEasing: 'cubicOut', animationDelay: 200,
   }
 }, [eraData])
 
@@ -217,12 +220,12 @@ onMounted(() => {
 .block-desc .accent { color: var(--bean-green-bright); font-weight: 700; }
 .block-desc .warm { color: var(--warm-amber); font-weight: 700; }
 
-.chart-card { padding: 20px; }
-.chart-box { width: 100%; height: 300px; }
-.chart-box.tall { height: 320px; }
+.chart-card { padding: var(--space-md); }
+.chart-box { width: 100%; height: 280px; }
+.chart-box.tall { height: 300px; }
 
 @media (max-width: 768px) {
-  .chart-box { height: 240px; }
-  .chart-box.tall { height: 260px; }
+  .chart-box { height: 220px; }
+  .chart-box.tall { height: 240px; }
 }
 </style>

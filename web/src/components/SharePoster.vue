@@ -1,8 +1,5 @@
 <script setup>
 import { inject, ref, computed, onMounted, watch } from 'vue'
-import ParticleBg from '@/components/ParticleBg.vue'
-import FloatingLights from '@/components/FloatingLights.vue'
-import DynamicBg from '@/components/DynamicBg.vue'
 
 const persona = inject('persona')
 const monthlyStats = inject('monthlyStats')
@@ -15,11 +12,10 @@ const canvasRef = ref(null)
 const posterGenerated = ref(false)
 const currentTheme = ref(0)
 
-const themes = [
-  { name: '墨绿影院', bg: '#0a0c0f', accent: '#a8c5a0', text: '#e8e4d9', dim: '#6a6f78' },
-  { name: '暖暮胶片', bg: '#1a1410', accent: '#d4a857', text: '#e8e4d9', dim: '#8a7a6a' },
-  { name: '雾蓝记忆', bg: '#0d1118', accent: '#6b8caf', text: '#d4dce4', dim: '#5a6a7a' },
-]
+  const themes = [
+    { name: '深色', bg: '#0E1014', accent: '#86A89C', text: '#F1F1F1', dim: '#8C949F' },
+    { name: '浅色', bg: '#F7F7F5', accent: '#86A89C', text: '#333333', dim: '#888888' },
+  ]
 
 const year = selectedYear
 
@@ -201,9 +197,6 @@ onMounted(() => {
 
 <template>
   <section ref="sectionRef" class="poster-section">
-    <DynamicBg />
-    <ParticleBg :density="40" color="rgba(168, 197, 160, " />
-    <FloatingLights :count="3" />
     <div class="section-content">
       <p class="section-label reveal-up" :class="{ visible }">年度观影海报</p>
       <p class="narrative reveal-up" :class="{ visible }">
@@ -239,8 +232,8 @@ onMounted(() => {
 <style scoped>
 .poster-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 60px 24px; position: relative; overflow: hidden;
-  background: linear-gradient(180deg, #11151a 0%, var(--cinema-black) 100%);
+  padding: var(--section-gap) var(--page-margin);
+  background: var(--bg);
 }
 .section-content { max-width: 760px; width: 100%; text-align: center; position: relative; z-index: 1; }
 
@@ -269,12 +262,12 @@ onMounted(() => {
   box-shadow: var(--glow-green);
 }
 .action-btn.primary {
-  background: linear-gradient(135deg, rgba(168,197,160,0.15), rgba(168,197,160,0.05));
-  border-color: rgba(168,197,160,0.3);
-  color: var(--bean-green-bright);
+  background: rgba(134, 168, 156, 0.1);
+  border-color: rgba(134, 168, 156, 0.2);
+  color: var(--primary-bright);
 }
 .action-btn.primary:hover {
-  background: linear-gradient(135deg, rgba(168,197,160,0.25), rgba(168,197,160,0.1));
+  background: rgba(134, 168, 156, 0.15);
 }
 
 .share-hint {

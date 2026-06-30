@@ -46,16 +46,16 @@ const { chartRef: hourChartRef, resize: hourResize } = useECharts(() => {
       axisLabel: { color: '#6a6f78' },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } } },
     visualMap: { show: false, min: 0, max: maxVal,
-      inRange: { color: ['#1a1f1a', '#3a5a34', '#7a9a72', '#a8c5a0', '#c4dcbc'] } },
+      inRange: { color: ['rgba(255,255,255,0.04)', 'rgba(134,168,156,0.3)', 'rgba(134,168,156,0.7)', '#86A89C'] } },
     series: [{
-      type: 'bar', barMaxWidth: 18,
+      type: 'bar', barMaxWidth: 14,
       data: data.map((v, i) => ({
         value: v,
-        itemStyle: { borderRadius: [4, 4, 0, 0] },
+        itemStyle: { borderRadius: [3, 3, 0, 0] },
       })),
-      animationDelay: (idx) => idx * 60,
-      animationDuration: 800,
-      animationEasing: 'elasticOut',
+      animationDelay: (idx) => idx * 40,
+      animationDuration: 600,
+      animationEasing: 'cubicOut',
     }],
     animationDuration: 0,
   }
@@ -85,18 +85,17 @@ const { chartRef: weekdayChartRef, resize: weekdayResize } = useECharts(() => {
       axisLabel: { color: '#6a6f78' },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } } },
     series: [{
-      type: 'bar', barMaxWidth: 30,
+      type: 'bar', barMaxWidth: 26,
       data: d.map(x => x.count),
       itemStyle: {
-        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [{ offset: 0, color: 'rgba(107,140,175,0.8)' }, { offset: 1, color: 'rgba(107,140,175,0.1)' }] },
-        borderRadius: [6, 6, 0, 0],
+        color: 'rgba(140,148,159,0.35)',
+        borderRadius: [4, 4, 0, 0],
       },
-      animationDelay: (idx) => idx * 80,
-      animationDuration: 1000,
-      animationEasing: 'elasticOut',
+      animationDelay: (idx) => idx * 60,
+      animationDuration: 800,
+      animationEasing: 'cubicOut',
     }],
-    animationDuration: 1000, animationEasing: 'cubicOut', animationDelay: 200,
+    animationDuration: 800, animationEasing: 'cubicOut', animationDelay: 200,
   }
 }, [weekdayData])
 
@@ -125,14 +124,14 @@ const { chartRef: monthChartRef, resize: monthResize } = useECharts(() => {
       axisLabel: { color: '#6a6f78' },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } } },
     series: [{
-      type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+      type: 'line', smooth: true, symbol: 'circle', symbolSize: 5,
       data: data.map(s => s.total_count),
-      lineStyle: { color: '#a8c5a0', width: 2.5 },
-      itemStyle: { color: '#c4dcbc', borderColor: '#a8c5a0', borderWidth: 2 },
+      lineStyle: { color: '#86A89C', width: 1.5 },
+      itemStyle: { color: '#A0BEB4' },
       areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-        colorStops: [{ offset: 0, color: 'rgba(168,197,160,0.25)' }, { offset: 1, color: 'rgba(168,197,160,0.01)' }] } },
+        colorStops: [{ offset: 0, color: 'rgba(134,168,156,0.12)' }, { offset: 1, color: 'rgba(134,168,156,0.01)' }] } },
     }],
-    animationDuration: 1500, animationEasing: 'cubicOut', animationDelay: 300,
+    animationDuration: 1000, animationEasing: 'cubicOut', animationDelay: 300,
   }
 }, [yearMonths])
 
@@ -140,9 +139,9 @@ const patternLabel = computed(() => {
   const p = watchPattern.value || {}
   const type = p.pattern_type || 'stable'
   const labels = {
-    stable: { icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>', name: '佛系稳定型', desc: '你的观影节奏如涓涓细流，稳定而持久' },
-    balanced: { icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6M7 12H1m17.5-6.5l-4.24 4.24M9.74 14.74L5.5 18.99m13 0l-4.24-4.24M9.74 9.26L5.5 4.99"/></svg>', name: '张弛有度型', desc: '你有自己的节奏，忙时少看，闲时补上' },
-    pulse: { icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>', name: '脉冲爆发型', desc: '你追剧如洪水，来一波停一波' },
+    stable: { icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>', name: '佛系稳定型', desc: '你的观影节奏如涓涓细流，稳定而持久' },
+    balanced: { icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>', name: '张弛有度型', desc: '你有自己的节奏，忙时少看，闲时补上' },
+    pulse: { icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>', name: '脉冲爆发型', desc: '你追剧如洪水，来一波停一波' },
   }
   return labels[type] || labels.stable
 })
@@ -224,32 +223,30 @@ onMounted(() => {
 
 .pace-card {
   display: flex; align-items: center; gap: 16px;
-  padding: 20px 24px; margin-bottom: 32px;
+  padding: var(--space-md) var(--space-lg); margin-bottom: 32px;
 }
-.pace-icon { color: var(--bean-green); display: flex; align-items: center; }
-.pace-info { flex: 1; }
-.pace-name { font-size: 1.1rem; font-weight: 700; color: var(--text-bright); margin-bottom: 4px; }
-.pace-desc { font-size: 0.85rem; color: var(--text-dim); }
+.pace-icon { color: var(--primary); display: flex; align-items: center; }
+.pace-name { font-size: 1.05rem; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
+.pace-desc { font-size: 0.85rem; color: var(--text-3); }
 .pace-stat { text-align: center; }
 .pace-stat-num {
-  font-size: 2rem; font-weight: 900;
-  background: linear-gradient(135deg, var(--bean-green-bright), var(--bean-green));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  font-size: 1.8rem; font-weight: 800; color: var(--primary-bright);
+  font-variant-numeric: tabular-nums;
 }
-.pace-stat-label { font-size: 0.72rem; color: var(--text-dim); }
+.pace-stat-label { font-size: 0.72rem; color: var(--text-3); }
 
 .chart-block { margin-bottom: 32px; }
 .block-title {
   display: flex; align-items: center; gap: 6px;
-  font-size: 1rem; color: var(--text-bright); font-weight: 700;
+  font-size: 0.95rem; color: var(--text-1); font-weight: 700;
   margin-bottom: 6px; letter-spacing: 1px;
 }
-.block-title svg { color: var(--bean-green); }
-.block-desc { font-size: 0.88rem; color: var(--text-dim); margin-bottom: 14px; }
-.block-desc .accent { color: var(--bean-green-bright); font-weight: 700; }
-.block-desc .warm { color: var(--warm-amber); font-weight: 700; }
-.chart-card { padding: 18px; }
-.chart-box { width: 100%; height: 220px; }
+.block-title svg { color: var(--primary); }
+.block-desc { font-size: 0.85rem; color: var(--text-3); margin-bottom: 14px; }
+.block-desc .accent { color: var(--primary-bright); font-weight: 700; }
+.block-desc .warm { color: var(--primary-bright); font-weight: 700; }
+.chart-card { padding: var(--space-md); }
+.chart-box { width: 100%; height: 200px; }
 
 @media (max-width: 768px) {
   .pace-card { flex-direction: column; text-align: center; gap: 12px; }

@@ -1,12 +1,10 @@
 <script setup>
 import { inject, ref, computed, onMounted, watch } from 'vue'
 import { useCountUp } from '@/composables/useTextReveal'
-import FloatingLights from '@/components/FloatingLights.vue'
 
 const monthlyStats = inject('monthlyStats')
 const firstWatched = inject('firstWatched')
 const lastWatched = inject('lastWatched')
-const totalStats = inject('totalStats')
 const selectedYear = inject('selectedYear')
 
 const visible = ref(false)
@@ -22,8 +20,6 @@ const yearStats = computed(() => {
   return {
     count: stats.reduce((a, s) => a + s.total_count, 0),
     minutes: stats.reduce((a, s) => a + s.total_minutes, 0),
-    movies: stats.reduce((a, s) => a + s.movie_count, 0),
-    episodes: stats.reduce((a, s) => a + s.episode_count, 0),
   }
 })
 
@@ -45,9 +41,9 @@ function formatDate(dateStr) {
 watch(visible, (v) => {
   if (v) {
     setTimeout(() => {
-      animate(numHours.value, hours.value, 1800)
-      animate(numDays.value, parseFloat(days.value), 1800)
-      animate(numCount.value, yearStats.value.count, 1500)
+      animate(numHours.value, hours.value, 1500)
+      animate(numDays.value, parseFloat(days.value), 1500)
+      animate(numCount.value, yearStats.value.count, 1200)
     }, 300)
   }
 })
@@ -62,8 +58,6 @@ onMounted(() => {
 
 <template>
   <section ref="sectionRef" class="narrative-section">
-    <FloatingLights :count="3" />
-    <div class="bg-glow" />
     <div class="section-content">
       <p class="section-label reveal-up" :class="{ visible }">{{ selectedYear }} · 光影之旅</p>
 
@@ -73,9 +67,7 @@ onMounted(() => {
           <span class="accent">{{ monthCount }}</span>
           个月里
         </p>
-        <p class="story-text">
-          一共观看了
-        </p>
+        <p class="story-text">一共观看了</p>
       </div>
 
       <div class="big-counter reveal-scale" :class="{ visible }">
@@ -96,14 +88,14 @@ onMounted(() => {
       </div>
 
       <div class="first-last stagger" :class="{ visible }" v-if="firstWatched || lastWatched">
-        <div class="media-card bean-card" v-if="firstWatched">
+        <div class="media-card glass-card" v-if="firstWatched">
           <div class="card-label">年度第一部</div>
           <img v-if="firstWatched.poster_url" class="card-poster" :src="firstWatched.poster_url" alt="" loading="lazy" />
           <div class="card-poster placeholder" v-else><span>{{ firstWatched.title }}</span></div>
           <div class="card-title">{{ firstWatched.title }}</div>
           <div class="card-date">{{ formatDate(firstWatched.watched_at) }}</div>
         </div>
-        <div class="media-card bean-card" v-if="lastWatched">
+        <div class="media-card glass-card" v-if="lastWatched">
           <div class="card-label">年度最新一部</div>
           <img v-if="lastWatched.poster_url" class="card-poster" :src="lastWatched.poster_url" alt="" loading="lazy" />
           <div class="card-poster placeholder" v-else><span>{{ lastWatched.title }}</span></div>
@@ -122,81 +114,72 @@ onMounted(() => {
 <style scoped>
 .narrative-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 60px 24px; position: relative; overflow: hidden;
-  background: linear-gradient(180deg, var(--cinema-black) 0%, #0d1410 100%);
+  padding: var(--section-gap) var(--page-margin);
+  background: var(--bg);
 }
-.bg-glow {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 600px; height: 600px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(168,197,160,0.06) 0%, transparent 70%);
-  pointer-events: none;
-}
-.section-content { max-width: 680px; width: 100%; text-align: center; position: relative; z-index: 1; }
+.section-content { max-width: 640px; width: 100%; text-align: center; }
 
 .story-text {
-  font-size: 1.15rem; color: var(--text); line-height: 2;
-  letter-spacing: 1px;
+  font-size: 1.1rem; color: var(--text-2); line-height: 2; letter-spacing: 1px;
 }
-.story-text .accent { color: var(--bean-green-bright); font-weight: 700; font-size: 1.3rem; }
+.story-text .accent { color: var(--primary-bright); font-weight: 700; font-size: 1.3rem; }
 
 .big-counter {
-  margin: 24px 0; display: flex; align-items: baseline; justify-content: center; gap: 8px;
+  margin: 28px 0; display: flex; align-items: baseline; justify-content: center; gap: 8px;
 }
 .counter-num {
-  font-size: 5.5rem; font-weight: 900; font-variant-numeric: tabular-nums;
-  background: linear-gradient(135deg, var(--bean-green-bright), var(--bean-green));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  line-height: 1;
+  font-size: clamp(2.8rem, 9vw, 4.5rem); font-weight: 800;
+  color: var(--primary-bright); font-variant-numeric: tabular-nums;
+  line-height: 1; letter-spacing: -0.02em;
 }
-.counter-unit { font-size: 1.2rem; color: var(--text-dim); }
+.counter-unit { font-size: 1.1rem; color: var(--text-3); }
 
 .time-block {
-  display: flex; align-items: center; justify-content: center; gap: 24px;
+  display: flex; align-items: center; justify-content: center; gap: 28px;
   margin: 32px 0;
 }
 .time-item { display: flex; flex-direction: column; gap: 4px; }
 .time-num {
-  font-size: 2.2rem; font-weight: 800; color: var(--warm-amber);
+  font-size: 2rem; font-weight: 800; color: var(--text-1);
   font-variant-numeric: tabular-nums; line-height: 1;
 }
-.time-label { font-size: 0.85rem; color: var(--text-dim); }
-.time-divider { font-size: 1.5rem; color: var(--text-dim); }
+.time-label { font-size: 0.82rem; color: var(--text-3); }
+.time-divider { font-size: 1.2rem; color: var(--text-dim); }
 
 .first-last {
-  display: flex; gap: 20px; justify-content: center; margin: 36px 0;
+  display: flex; gap: 20px; justify-content: center; margin: 40px 0;
   flex-wrap: wrap;
 }
 .media-card {
-  padding: 16px; border-radius: var(--radius); width: 180px;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: var(--space-md); width: 170px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
 }
-.card-label { font-size: 0.75rem; color: var(--bean-green); font-weight: 600; }
+.card-label { font-size: 0.75rem; color: var(--primary); font-weight: 600; }
 .card-poster {
   width: 100px; height: 150px; border-radius: var(--radius-sm);
-  object-fit: cover; background: rgba(255,255,255,0.04);
+  object-fit: cover; background: rgba(255,255,255,0.03);
 }
 .card-poster.placeholder {
   display: flex; align-items: center; justify-content: center;
-  padding: 6px; text-align: center;
-  font-size: 0.7rem; color: var(--text-dim);
+  padding: 8px; text-align: center; font-size: 0.72rem; color: var(--text-3);
 }
 .card-title {
-  font-size: 0.85rem; font-weight: 600; color: var(--text-bright);
+  font-size: 0.85rem; font-weight: 600; color: var(--text-1);
   text-align: center; line-height: 1.4;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.card-date { font-size: 0.75rem; color: var(--text-dim); }
+.card-date { font-size: 0.75rem; color: var(--text-3); }
 
 .story-ending {
-  font-size: 0.95rem; color: var(--text-dim); margin-top: 24px;
-  letter-spacing: 2px; font-style: italic;
+  font-size: 0.9rem; color: var(--text-3); margin-top: 28px;
+  letter-spacing: 2px;
 }
 
 @media (max-width: 768px) {
-  .counter-num { font-size: 3.5rem; }
+  .counter-num { font-size: 2.8rem; }
   .time-num { font-size: 1.6rem; }
-  .media-card { width: 150px; }
+  .media-card { width: 145px; }
   .card-poster { width: 80px; height: 120px; }
 }
 </style>

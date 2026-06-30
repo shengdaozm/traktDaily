@@ -1,7 +1,6 @@
 <script setup>
 import { inject, ref, computed, onMounted, watch } from 'vue'
 import { useECharts, TOOLTIP_STYLE } from '@/composables/useEcharts'
-import FloatingLights from '@/components/FloatingLights.vue'
 
 const persona = inject('persona')
 const diversityIndex = inject('diversityIndex')
@@ -33,23 +32,22 @@ const { chartRef, resize } = useECharts(() => {
       indicator: data.map(d => ({ name: d.name, max: 100 })),
       shape: 'polygon',
       splitNumber: 4,
-      axisName: { color: '#8a8f99', fontSize: 12 },
-      splitLine: { lineStyle: { color: 'rgba(168,197,160,0.08)' } },
-      splitArea: { areaStyle: { color: ['transparent', 'rgba(168,197,160,0.02)'] } },
-      axisLine: { lineStyle: { color: 'rgba(168,197,160,0.08)' } },
+      axisName: { color: '#8C949F', fontSize: 11 },
+      splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } },
+      splitArea: { areaStyle: { color: ['transparent', 'rgba(255,255,255,0.01)'] } },
+      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } },
     },
     series: [{
       type: 'radar',
       data: [{
         value: data.map(d => d.value),
         name: '观影DNA',
-        areaStyle: { color: { type: 'radial', x: 0.5, y: 0.5, r: 0.5,
-          colorStops: [{ offset: 0, color: 'rgba(168,197,160,0.3)' }, { offset: 1, color: 'rgba(168,197,160,0.05)' }] } },
-        lineStyle: { color: '#a8c5a0', width: 2 },
-        itemStyle: { color: '#c4dcbc' },
-        symbolSize: 5,
+        areaStyle: { color: 'rgba(134,168,156,0.1)' },
+        lineStyle: { color: '#86A89C', width: 1.5 },
+        itemStyle: { color: '#A0BEB4' },
+        symbolSize: 4,
       }],
-      animationDuration: 2000, animationEasing: 'elasticOut', animationDelay: 300,
+      animationDuration: 1200, animationEasing: 'cubicOut', animationDelay: 300,
     }],
   }
 }, [radarData])
@@ -114,13 +112,8 @@ onMounted(() => {
 
 <template>
   <section ref="sectionRef" class="persona-section" v-if="persona">
-    <FloatingLights :count="3" />
-    <div class="bg-glow" />
     <div class="section-content">
-      <p class="section-label reveal-up" :class="{ visible }">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M4 8 L4 4 L8 4 M16 4 L20 4 L20 8 M20 16 L20 20 L16 20 M8 20 L4 20 L4 16"/><circle cx="12" cy="12" r="4"/></svg>
-        个人年度观影画像
-      </p>
+      <p class="section-label reveal-up" :class="{ visible }">个人年度观影画像</p>
 
       <!-- 原型 -->
       <div class="archetype reveal-scale" :class="{ visible }">
@@ -194,32 +187,17 @@ onMounted(() => {
 <style scoped>
 .persona-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 60px 24px; position: relative; overflow: hidden;
-  background: linear-gradient(180deg, var(--cinema-black) 0%, #0d1410 100%);
+  padding: var(--section-gap) var(--page-margin); position: relative;
+  background: var(--bg);
 }
-.bg-glow {
-  position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
-  width: 500px; height: 500px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(168,197,160,0.06) 0%, transparent 70%);
-  pointer-events: none;
-}
-.section-content { max-width: 760px; width: 100%; position: relative; z-index: 1; }
+.section-content { max-width: 720px; width: 100%; position: relative; z-index: 1; }
 
-.archetype { text-align: center; margin-bottom: 28px; position: relative; }
-.archetype-glow {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 300px; height: 80px; border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(168,197,160,0.15) 0%, transparent 70%);
-  filter: blur(20px); pointer-events: none;
-}
+.archetype { text-align: center; margin-bottom: 28px; }
 .archetype-name {
-  font-size: 2.6rem; font-weight: 900; position: relative;
-  background: linear-gradient(135deg, var(--bean-green-bright), var(--bean-green), var(--warm-amber));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  line-height: 1.2; letter-spacing: 2px;
-  animation: glow-pulse 3s ease-in-out infinite;
+  font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
+  color: var(--text-1); line-height: 1.2; letter-spacing: 2px;
 }
-.archetype-desc { font-size: 0.95rem; color: var(--text-dim); margin-top: 8px; }
+.archetype-desc { font-size: 0.92rem; color: var(--text-3); margin-top: 8px; }
 
 .tags-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 28px; }
 .tag-card {
@@ -228,24 +206,24 @@ onMounted(() => {
 }
 .tag-icon {
   display: flex; align-items: center; justify-content: center;
-  width: 36px; height: 36px; border-radius: 50%;
-  background: linear-gradient(135deg, rgba(168,197,160,0.2), rgba(168,197,160,0.05));
-  border: 1px solid rgba(168,197,160,0.2);
-  font-size: 1rem; font-weight: 800; color: var(--bean-green-bright);
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(134,168,156,0.08);
+  border: 1px solid rgba(134,168,156,0.15);
+  font-size: 0.85rem; font-weight: 700; color: var(--primary-bright);
 }
-.tag-name { font-size: 0.9rem; font-weight: 700; color: var(--bean-green-bright); }
-.tag-desc { font-size: 0.72rem; color: var(--text-dim); text-align: center; }
+.tag-name { font-size: 0.88rem; font-weight: 700; color: var(--text-1); }
+.tag-desc { font-size: 0.72rem; color: var(--text-3); text-align: center; }
 
 .radar-traits { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
-.radar-card, .traits-card { padding: 20px; }
-.card-title { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 12px; font-weight: 600; letter-spacing: 1px; }
+.radar-card, .traits-card { padding: var(--space-md); }
+.card-title { font-size: 0.82rem; color: var(--text-3); margin-bottom: 12px; font-weight: 600; letter-spacing: 1px; }
 .card-title.center { text-align: center; margin-bottom: 18px; }
-.radar-chart { width: 100%; height: 300px; }
+.radar-chart { width: 100%; height: 280px; }
 
 .traits-list { display: flex; flex-direction: column; gap: 12px; }
 .trait-item { display: flex; flex-direction: column; gap: 2px; }
-.trait-label { font-size: 0.78rem; color: var(--bean-green); font-weight: 600; }
-.trait-value { font-size: 0.82rem; color: var(--text); }
+.trait-label { font-size: 0.75rem; color: var(--primary); font-weight: 600; }
+.trait-value { font-size: 0.8rem; color: var(--text-2); }
 
 .word-cloud { margin-bottom: 28px; }
 .cloud-container {
@@ -254,34 +232,33 @@ onMounted(() => {
   padding: 24px; min-height: 120px;
 }
 .cloud-word {
-  display: inline-block; color: var(--text); opacity: 0;
-  animation: fadeInScale 0.5s ease forwards;
-  transition: all var(--transition); cursor: default;
+  display: inline-block; color: var(--text-2); opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+  transition: color var(--transition); cursor: default;
   line-height: 1.4;
 }
-.cloud-word:hover { color: var(--bean-green-bright); transform: scale(1.1); }
+.cloud-word:hover { color: var(--primary-bright); }
 .cloud-word.archetype {
-  color: var(--bean-green-bright); font-weight: 900;
-  text-shadow: 0 0 15px rgba(168,197,160,0.3);
+  color: var(--primary-bright); font-weight: 800;
 }
-.cloud-word.tag { color: var(--warm-amber); font-weight: 700; }
+.cloud-word.tag { color: var(--text-1); font-weight: 700; }
 
-.narrative-box { padding: 24px; margin-bottom: 24px; }
+.narrative-box { padding: var(--space-md); margin-bottom: 24px; }
 .narrative-text {
-  font-size: 1rem; line-height: 2; color: var(--text);
+  font-size: 0.95rem; line-height: 1.9; color: var(--text-2);
   text-align: justify; letter-spacing: 0.5px;
 }
-.cursor-blink { animation: blink 1s step-end infinite; color: var(--bean-green); }
+.cursor-blink { animation: blink 1s step-end infinite; color: var(--primary); }
 @keyframes blink { 50% { opacity: 0; } }
 
 .highlights { display: flex; flex-direction: column; gap: 10px; }
 .highlight-item {
   display: flex; align-items: flex-start; gap: 8px;
-  font-size: 0.88rem; color: var(--text-dim);
-  padding: 10px 16px; border-radius: 10px;
-  background: var(--surface-frost); border: 1px solid var(--border);
+  font-size: 0.85rem; color: var(--text-3);
+  padding: 10px 16px; border-radius: var(--radius);
+  background: rgba(255,255,255,0.02); border: 1px solid var(--border);
 }
-.highlight-bullet { color: var(--bean-green); font-weight: bold; flex-shrink: 0; }
+.highlight-bullet { color: var(--primary); font-weight: bold; flex-shrink: 0; }
 
 @media (max-width: 768px) {
   .archetype-name { font-size: 1.8rem; }

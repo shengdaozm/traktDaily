@@ -1,8 +1,6 @@
 <script setup>
-import { ref, provide, onMounted, onUnmounted, reactive } from 'vue'
+import { ref, provide, onMounted, onUnmounted } from 'vue'
 import { useTraktData } from '@/composables/useTraktData'
-import { useVisualEffects } from '@/composables/useVisualEffects'
-import FilmGrain from '@/components/FilmGrain.vue'
 import WelcomePage from '@/components/WelcomePage.vue'
 import OpeningNarrative from '@/components/OpeningNarrative.vue'
 import CoreOverview from '@/components/CoreOverview.vue'
@@ -56,12 +54,8 @@ function unregisterResize(fn) {
 provide('registerResize', registerResize)
 provide('unregisterResize', unregisterResize)
 
-const { mouseX, mouseY, glowVisible } = useVisualEffects()
-provide('useVisualEffects', useVisualEffects)
-
 const scrollProgress = ref(0)
 const activeSection = ref(0)
-const parallaxY = ref(0)
 const selectedYear = ref(new Date().getFullYear())
 
 provide('selectedYear', selectedYear)
@@ -83,7 +77,6 @@ function handleScroll() {
   const scrollTop = window.scrollY
   const docHeight = document.documentElement.scrollHeight - window.innerHeight
   scrollProgress.value = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
-  parallaxY.value = scrollTop * 0.3
 
   const winH = window.innerHeight
   let bestIdx = 0
@@ -111,20 +104,8 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
 <template>
   <div class="app">
-    <!-- 鼠标跟随光晕 -->
-    <div
-      class="mouse-glow"
-      v-if="glowVisible"
-      :style="{ left: mouseX + 'px', top: mouseY + 'px' }"
-    />
-
-    <!-- 胶片噪点 -->
-    <FilmGrain :opacity="0.035" />
-
-    <!-- 滚动进度条 -->
     <div class="scroll-progress" :style="{ width: scrollProgress + '%' }" />
 
-    <!-- 侧边导航点 -->
     <nav class="nav-dots" v-if="!loading && !error">
       <button
         v-for="(s, i) in sections" :key="i"
@@ -143,7 +124,7 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
     <template v-else-if="error">
       <div class="loading-screen">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--soft-pink)">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--text-3)">
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
           <line x1="12" y1="9" x2="12" y2="13"/>
           <line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -169,20 +150,21 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 </template>
 
 <style scoped>
-.app { min-height: 100vh; background: var(--cinema-black); }
+.app { min-height: 100vh; background: var(--bg); }
 .loading-screen {
   min-height: 100vh; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 16px;
-  background: var(--cinema-black); color: var(--text-dim);
+  background: var(--bg); color: var(--text-3);
 }
 .loading-spinner {
-  width: 40px; height: 40px; border-radius: 50%;
-  border: 3px solid rgba(168,197,160,0.15);
-  border-top-color: var(--bean-green);
-  animation: spin-slow 1s linear infinite;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.08);
+  border-top-color: var(--primary);
+  animation: spin 1s linear infinite;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 .error-detail {
-  font-size: 0.85rem; color: var(--text-dim); max-width: 400px;
+  font-size: 0.82rem; color: var(--text-3); max-width: 400px;
   text-align: center; word-break: break-all; margin-top: 8px;
 }
 </style>

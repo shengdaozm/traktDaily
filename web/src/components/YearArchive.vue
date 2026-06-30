@@ -8,20 +8,6 @@ const selectedYear = inject('selectedYear')
 
 const visible = ref(false)
 const sectionRef = ref(null)
-const cardRefs = ref([])
-
-function onTilt(e, idx) {
-  const el = cardRefs.value[idx]
-  if (!el) return
-  const rect = el.getBoundingClientRect()
-  const dx = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2)
-  const dy = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2)
-  el.style.transform = `perspective(800px) rotateX(${-dy * 10}deg) rotateY(${dx * 10}deg) translateY(-6px)`
-}
-function onLeave(idx) {
-  const el = cardRefs.value[idx]
-  if (el) el.style.transform = ''
-}
 
 const yearStats = computed(() => {
   return (availableYears.value || []).map(y => {
@@ -61,13 +47,10 @@ onMounted(() => {
 
       <div class="year-grid stagger" :class="{ visible }">
         <div
-          v-for="(ys, i) in yearStats"
+          v-for="ys in yearStats"
           :key="ys.year"
-          class="year-card bean-card glow-border"
+          class="year-card glass-card"
           :class="{ current: ys.isCurrent }"
-          :ref="el => cardRefs[i] = el"
-          @mousemove="onTilt($event, i)"
-          @mouseleave="onLeave(i)"
           @click="selectYear(ys.year)"
         >
           <div class="year-num">{{ ys.year }}</div>
@@ -98,8 +81,6 @@ onMounted(() => {
             <a href="https://trakt.tv" target="_blank" class="footer-link">Trakt</a>
             <span>·</span>
             <a href="https://themoviedb.org" target="_blank" class="footer-link">TMDB</a>
-            <span>·</span>
-            <a href="https://pages.github.com" target="_blank" class="footer-link">GitHub Pages</a>
           </div>
         </div>
       </div>
@@ -110,74 +91,59 @@ onMounted(() => {
 <style scoped>
 .archive-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 60px 24px;
-  background: linear-gradient(180deg, var(--cinema-black) 0%, #0d1014 100%);
+  padding: var(--section-gap) var(--page-margin);
+  background: var(--bg);
 }
 .section-content { max-width: 860px; width: 100%; text-align: center; }
 
 .year-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
   margin: 36px 0;
 }
 .year-card {
-  padding: 28px 20px; cursor: pointer; position: relative;
+  padding: var(--space-lg) var(--space-md); cursor: pointer; position: relative;
   display: flex; flex-direction: column; align-items: center; gap: 12px;
-  transition: transform 0.15s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  will-change: transform; overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
 }
-.year-card.current {
-  border-color: rgba(168,197,160,0.4);
-  box-shadow: var(--glow-green);
-}
+.year-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.year-card.current { border-color: rgba(134,168,156,0.2); }
 .year-num {
-  font-size: 2.5rem; font-weight: 900;
-  background: linear-gradient(135deg, var(--bean-green-bright), var(--bean-green));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  line-height: 1;
+  font-size: 2.2rem; font-weight: 800; color: var(--primary-bright);
+  font-variant-numeric: tabular-nums; line-height: 1;
 }
 .year-badge {
   position: absolute; top: 10px; right: 10px;
-  padding: 2px 10px; border-radius: 10px;
-  background: rgba(168,197,160,0.15); color: var(--bean-green-bright);
+  padding: 2px 10px; border-radius: var(--radius);
+  background: rgba(134,168,156,0.1); color: var(--primary-bright);
   font-size: 0.68rem; font-weight: 700;
 }
-.year-stats {
-  display: flex; gap: 20px; justify-content: center;
-}
+.year-stats { display: flex; gap: 20px; }
 .year-stat { display: flex; flex-direction: column; gap: 2px; }
-.stat-val {
-  font-size: 1.1rem; font-weight: 800; color: var(--text-bright);
-  font-variant-numeric: tabular-nums;
-}
-.stat-lbl { font-size: 0.72rem; color: var(--text-dim); }
-.year-hint {
-  font-size: 0.72rem; color: var(--text-dim);
-  opacity: 0; transition: opacity var(--transition);
-}
+.stat-val { font-size: 1.05rem; font-weight: 700; color: var(--text-1); font-variant-numeric: tabular-nums; }
+.stat-lbl { font-size: 0.72rem; color: var(--text-3); }
+.year-hint { font-size: 0.72rem; color: var(--text-3); opacity: 0; transition: opacity var(--transition); }
 .year-card:hover .year-hint { opacity: 1; }
 
 .archive-footer {
-  margin-top: 48px; padding: 32px 0;
-  border-top: 1px solid var(--border);
+  margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border);
 }
 .footer-text {
-  font-size: 1.1rem; color: var(--text-bright); font-weight: 600;
+  font-size: 1.05rem; color: var(--text-1); font-weight: 600;
   margin-bottom: 8px; letter-spacing: 2px;
 }
 .footer-sub {
-  font-size: 0.88rem; color: var(--text-dim); margin-bottom: 20px;
-  letter-spacing: 1px; font-style: italic;
+  font-size: 0.85rem; color: var(--text-3); margin-bottom: 20px; letter-spacing: 1px;
 }
 .footer-links {
   display: flex; gap: 8px; justify-content: center; align-items: center;
-  font-size: 0.78rem; color: var(--text-dim);
+  font-size: 0.78rem; color: var(--text-3);
 }
-.footer-link { color: var(--bean-green-dim); transition: color var(--transition); }
-.footer-link:hover { color: var(--bean-green-bright); }
+.footer-link { color: var(--primary-dim); transition: color var(--transition); }
+.footer-link:hover { color: var(--primary-bright); }
 
 @media (max-width: 768px) {
   .year-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .year-num { font-size: 2rem; }
-  .year-stats { gap: 14px; }
+  .year-num { font-size: 1.8rem; }
 }
 </style>
+
