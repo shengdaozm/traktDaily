@@ -161,7 +161,7 @@ onMounted(() => {
 
       <!-- 题材偏好 -->
       <div class="chart-block reveal-up" :class="{ visible }">
-        <h3 class="block-title">🎭 题材偏好</h3>
+        <h3 class="block-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L2 7 L12 12 L22 7 Z"/><path d="M2 17 L12 22 L22 17"/><path d="M2 12 L12 17 L22 12"/></svg> 题材偏好</h3>
         <p class="block-desc" v-if="topGenre">
           你最爱的类型是 <span class="accent">{{ topGenre }}</span>
         </p>
@@ -172,7 +172,7 @@ onMounted(() => {
 
       <!-- 地区偏好 -->
       <div class="chart-block reveal-up" :class="{ visible }">
-        <h3 class="block-title">🌍 地区偏好</h3>
+        <h3 class="block-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> 地区偏好</h3>
         <p class="block-desc">你的观影足迹遍布世界</p>
         <div class="chart-card bean-card">
           <div ref="countryChartRef" class="chart-box tall" />
@@ -181,7 +181,7 @@ onMounted(() => {
 
       <!-- 年代审美 -->
       <div class="chart-block reveal-up" :class="{ visible }">
-        <h3 class="block-title">📅 年代审美</h3>
+        <h3 class="block-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg> 年代审美</h3>
         <p class="block-desc">
           <template v-if="freshnessStats?.avg_year">
             平均首播年份 <span class="warm">{{ freshnessStats.avg_year }}</span> 年
@@ -206,9 +206,11 @@ onMounted(() => {
 
 .chart-block { margin-bottom: 36px; }
 .block-title {
+  display: flex; align-items: center; gap: 6px;
   font-size: 1rem; color: var(--text-bright); font-weight: 700;
   margin-bottom: 6px; letter-spacing: 1px;
 }
+.block-title svg { color: var(--bean-green); }
 .block-desc {
   font-size: 0.88rem; color: var(--text-dim); margin-bottom: 14px;
 }

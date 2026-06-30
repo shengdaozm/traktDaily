@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, onUnmounted } from 'vue'
 import ParticleBg from '@/components/ParticleBg.vue'
 import FloatingLights from '@/components/FloatingLights.vue'
-import DynamicBg from '@/components/DynamicBg.vue'
 
 const props = defineProps({
   mediaList: { type: Array, default: () => [] },
@@ -13,20 +12,32 @@ const year = new Date().getFullYear()
 const showContent = ref(false)
 const burstParticles = ref([])
 const buttonRef = ref(null)
+const currentBgIdx = ref(0)
 
-const backdropUrl = computed(() => {
-  const item = props.mediaList.find(m => m.backdrop_url)
-  return item?.backdrop_url || ''
+const backdrops = computed(() => {
+  return props.mediaList
+    .filter(m => m.backdrop_url)
+    .slice(0, 8)
+    .map(m => m.backdrop_url)
 })
 
 const titleChars = '你的年度观影宇宙'.split('')
+
+let bgTimer = null
+
+function startBgRotation() {
+  if (backdrops.value.length <= 1) return
+  bgTimer = setInterval(() => {
+    currentBgIdx.value = (currentBgIdx.value + 1) % backdrops.value.length
+  }, 6000)
+}
 
 function triggerBurst(e) {
   const rect = buttonRef.value.getBoundingClientRect()
   const cx = rect.left + rect.width / 2
   const cy = rect.top + rect.height / 2
   const particles = []
-  for (let i = 0; i  < 20; i++) {
+  for (let i = 0; i < 20; i++) {
     const angle = (Math.PI * 2 * i) / 20
     const dist = 60 + Math.random() * 80
     particles.push({
@@ -43,17 +54,42 @@ function triggerBurst(e) {
 
 onMounted(() => {
   setTimeout(() => showContent.value = true, 300)
+  startBgRotation()
+})
+
+onUnmounted(() => {
+  if (bgTimer) clearInterval(bgTimer)
 })
 </script>
 
 <template>
-  <section class="welcome-section" :style="backdropUrl ? { backgroundImage: `linear-gradient(135deg, rgba(10,12,15,0.92), rgba(10,12,15,0.75)), url(${backdropUrl})` } : {}">
-    <DynamicBg />
-    <ParticleBg :density="100" :speed="0.4" />
-    <FloatingLights :count="4" />
+  <section class="welcome-section">
+    <!-- 轮播剧照背景 -->
+    <div class="backdrop-carousel" v-if="backdrops.length">
+      <div
+        v-for="(url, i) in backdrops"
+        :key="i"
+        class="backdrop-slide"
+        :class="{ active: currentBgIdx === i }"
+        :style="{ backgroundImage: `url(${url})` }"
+      />
+    </div>
+    <div class="backdrop-overlay" />
+
+    <ParticleBg :density="80" :speed="0.3" />
+    <FloatingLights :count="3" />
 
     <div class="welcome-content" :class="{ show: showContent }">
-      <div class="welcome-icon">🎬</div>
+      <div class="welcome-brand">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <line x1="2" y1="8" x2="22" y2="8" />
+          <circle cx="6" cy="6" r="0.5" fill="currentColor" />
+          <circle cx="8" cy="6" r="0.5" fill="currentColor" />
+          <path d="M10 12 L15 15 L10 18 Z" fill="currentColor" stroke="none" />
+        </svg>
+        <span class="brand-text">traktDaily</span>
+      </div>
 
       <h1 class="welcome-title">
         <span
@@ -94,14 +130,39 @@ onMounted(() => {
 .welcome-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
   position: relative; overflow: hidden; text-align: center;
-  background: radial-gradient(ellipse at 50% 40%, #11151a 0%, var(--cinema-black) 70%);
+  background: var(--cinema-black);
+}
+
+/* 轮播剧照背景 */
+.backdrop-carousel {
+  position: absolute; inset: 0; z-index: 0;
+}
+.backdrop-slide {
+  position: absolute; inset: 0;
   background-size: cover; background-position: center;
+  opacity: 0; transition: opacity 2s ease-in-out;
+  animation: ken-burns 12s ease-in-out infinite alternate;
+}
+.backdrop-slide.active { opacity: 1; }
+
+@keyframes ken-burns {
+  0% { transform: scale(1.0) translateX(0); }
+  100% { transform: scale(1.12) translateX(-2%); }
+}
+
+.backdrop-overlay {
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(180deg,
+    rgba(10,12,15,0.75) 0%,
+    rgba(10,12,15,0.6) 40%,
+    rgba(10,12,15,0.85) 100%);
 }
 .welcome-section::after {
   content: ''; position: absolute; inset: 0;
   background: radial-gradient(ellipse 50% 40% at 50% 40%, rgba(168,197,160,0.08) 0%, transparent 70%);
   pointer-events: none; z-index: 1;
 }
+
 .welcome-content {
   position: relative; z-index: 2;
   opacity: 0; transform: translateY(20px);
@@ -109,10 +170,14 @@ onMounted(() => {
 }
 .welcome-content.show { opacity: 1; transform: translateY(0); }
 
-.welcome-icon {
-  font-size: 3.5rem; margin-bottom: 20px;
-  animation: float-slow 4s ease-in-out infinite;
-  filter: drop-shadow(0 0 20px rgba(168,197,160,0.3));
+.welcome-brand {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-bottom: 28px; color: var(--bean-green);
+  opacity: 0.8;
+}
+.brand-text {
+  font-size: 0.85rem; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 .welcome-title {
@@ -122,6 +187,7 @@ onMounted(() => {
 .title-char {
   display: inline-block; opacity: 0; transform: translateY(20px) scale(0.5);
   animation: char-drop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.5);
 }
 @keyframes char-drop {
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -141,10 +207,12 @@ onMounted(() => {
 .welcome-subtitle {
   font-size: 1.1rem; color: var(--bean-green-bright);
   margin-bottom: 8px; font-weight: 600; letter-spacing: 2px;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.5);
 }
 .welcome-desc {
   font-size: 0.92rem; color: var(--text-dim);
   margin-bottom: 40px; letter-spacing: 1px;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.5);
 }
 
 .btn-wrapper { position: relative; display: inline-block; }
@@ -157,6 +225,7 @@ onMounted(() => {
   cursor: pointer; transition: all var(--transition);
   animation: breathe 3s ease-in-out infinite;
   letter-spacing: 2px; position: relative; overflow: visible;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
 .start-btn::before {
   content: ''; position: absolute; inset: 0; border-radius: 30px;
@@ -193,6 +262,5 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .welcome-title { font-size: 2.2rem; letter-spacing: 2px; }
-  .welcome-icon { font-size: 2.5rem; }
 }
 </style>

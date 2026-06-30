@@ -92,23 +92,23 @@ def generate_tags(data):
     tags = []
 
     if data["night_ratio"] > 0.4:
-        tags.append({"icon": "🌙", "name": "深夜追剧人", "desc": "夜深了，你的故事才刚开始", "strength": min(data["night_ratio"] / 0.6, 1.0)})
+        tags.append({"icon": "夜", "name": "深夜追剧人", "desc": "夜深了，你的故事才刚开始", "strength": min(data["night_ratio"] / 0.6, 1.0)})
     if data["rating"]["avg_rating"] > 7.5:
-        tags.append({"icon": "🎯", "name": "精品猎人", "desc": "你的时间只留给好故事", "strength": min(data["rating"]["avg_rating"] / 9, 1.0)})
+        tags.append({"icon": "精", "name": "精品猎人", "desc": "你的时间只留给好故事", "strength": min(data["rating"]["avg_rating"] / 9, 1.0)})
     if data["diversity"]["diversity_score"] > 70:
-        tags.append({"icon": "📚", "name": "杂食观众", "desc": "什么类型都看，什么故事都体验", "strength": data["diversity"]["diversity_score"] / 100})
+        tags.append({"icon": "杂", "name": "杂食观众", "desc": "什么类型都看，什么故事都体验", "strength": data["diversity"]["diversity_score"] / 100})
     if data["binge"]["binge_ratio"] > 0.4:
-        tags.append({"icon": "🔥", "name": "一口气追完党", "desc": "开了头就停不下来", "strength": min(data["binge"]["binge_ratio"] / 0.7, 1.0)})
+        tags.append({"icon": "追", "name": "一口气追完党", "desc": "开了头就停不下来", "strength": min(data["binge"]["binge_ratio"] / 0.7, 1.0)})
     if data["global_ratio"] > 0.3:
-        tags.append({"icon": "🌍", "name": "国际化口味", "desc": "你的视界没有国界", "strength": min(data["global_ratio"] / 0.5, 1.0)})
+        tags.append({"icon": "界", "name": "国际化口味", "desc": "你的视界没有国界", "strength": min(data["global_ratio"] / 0.5, 1.0)})
     if data["weekend_ratio"] > 0.45:
-        tags.append({"icon": "📅", "name": "周末型", "desc": "工作日攒着，周末一次性释放", "strength": min(data["weekend_ratio"] / 0.6, 1.0)})
+        tags.append({"icon": "末", "name": "周末型", "desc": "工作日攒着，周末一次性释放", "strength": min(data["weekend_ratio"] / 0.6, 1.0)})
     if data["pattern"]["pattern_type"] == "pulse":
-        tags.append({"icon": "⚡", "name": "脉冲型", "desc": "追剧像发洪水，来一波停一波", "strength": 1.0 - data["pattern"]["stability"] / 100})
+        tags.append({"icon": "冲", "name": "脉冲型", "desc": "追剧像发洪水，来一波停一波", "strength": 1.0 - data["pattern"]["stability"] / 100})
     if data["freshness"]["freshness_score"] > 70:
-        tags.append({"icon": "🆕", "name": "追新一族", "desc": "永远在追最新最热的剧", "strength": data["freshness"]["freshness_score"] / 100})
+        tags.append({"icon": "新", "name": "追新一族", "desc": "永远在追最新最热的剧", "strength": data["freshness"]["freshness_score"] / 100})
     if data["runtime"]["movie_ratio"] < 0.1:
-        tags.append({"icon": "📺", "name": "剧集至上", "desc": "长线叙事才是你的菜", "strength": 1.0 - data["runtime"]["movie_ratio"]})
+        tags.append({"icon": "剧", "name": "剧集至上", "desc": "长线叙事才是你的菜", "strength": 1.0 - data["runtime"]["movie_ratio"]})
 
     return sorted(tags, key=lambda t: t["strength"], reverse=True)[:5]
 
@@ -137,20 +137,20 @@ def calc_radar(data):
 def generate_rule_based(data):
     tags = generate_tags(data)
     radar = calc_radar(data)
-    top_tag = tags[0] if tags else {"icon": "🎬", "name": "观影爱好者", "desc": "你热爱故事"}
+    top_tag = tags[0] if tags else {"icon": "影", "name": "观影爱好者", "desc": "你热爱故事"}
 
     top_genres = data["diversity"].get("top_genres", [])
     genre_text = "、".join(g["genre"] for g in top_genres[:2]) if top_genres else "各种类型"
 
     narrative = (
         f"这一年你一共看了 {data['total_plays']} 部作品。"
-        f"你是{top_tag['icon']} {top_tag['name']}——{top_tag['desc']}。"
+        f"你是{top_tag['name']}——{top_tag['desc']}。"
         f"你偏好 {genre_text} 的组合，"
         f"平均评分 {data['rating']['avg_rating']}，"
         f"binge 指数 {data['binge']['binge_ratio']}。"
     )
 
-    highlights = [f"{t['icon']} {t['name']}：{t['desc']}" for t in tags[:4]]
+    highlights = [f"{t['name']}：{t['desc']}" for t in tags[:4]]
 
     return {
         "archetype": top_tag["name"],
@@ -185,7 +185,7 @@ def build_prompt(data):
 要求：
 1. archetype: 用一个富有诗意的词定义用户的"观影原型"（4-8字，如"深夜故事旅人"）
 2. archetype_description: 一句话描述这个原型
-3. tags: 3-5个人格标签，每个包含 icon(emoji)、name(2-6字)、desc(一句话描述)
+3. tags: 3-5个人格标签，每个包含 icon(单个中文字)、name(2-6字)、desc(一句话描述)
 4. radar: 8个维度评分(0-100整数)，维度为 immersion(沉浸度)、quality(精品度)、diversity(广度)、depth(深度)、night_owl(夜猫)、freshness(新鲜度)、global(国际化)、binge(连贯追剧)
 5. narrative: 100-200字的人格叙事文案，像朋友在跟你聊天，有洞察力，发现数据中的有趣模式
 6. highlights: 3-5个观影高光时刻（简短一句话）

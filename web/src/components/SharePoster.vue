@@ -117,10 +117,10 @@ function generatePoster() {
 
     top3.value.forEach((m, i) => {
       const y = 470 + i * 40
-      const medals = ['🥇', '🥈', '🥉']
-      ctx.font = '20px sans-serif'
+      const medals = ['1', '2', '3']
+      ctx.font = 'bold 18px sans-serif'
       ctx.textAlign = 'left'
-      ctx.fillText(medals[i], 120, y)
+      ctx.fillText(medals[i] + '.', 120, y)
       ctx.fillStyle = theme.text
       ctx.font = '16px sans-serif'
       const title = m.title.length > 25 ? m.title.substring(0, 25) + '...' : m.title
@@ -216,13 +216,16 @@ onMounted(() => {
 
       <div class="actions stagger" :class="{ visible }">
         <button class="action-btn primary" @click="downloadPoster">
-          <span>💾 保存海报</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>保存海报</span>
         </button>
         <button class="action-btn" @click="switchTheme">
-          <span>🎨 {{ themes[currentTheme].name }}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="12" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M12 2a10 10 0 1 0 10 10c0-1.5-1-2-2-2h-2"/></svg>
+          <span>{{ themes[currentTheme].name }}</span>
         </button>
         <button class="action-btn" @click="generatePoster">
-          <span>🔄 重新生成</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span>重新生成</span>
         </button>
       </div>
 
@@ -255,6 +258,7 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 .action-btn {
+  display: inline-flex; align-items: center; gap: 6px;
   padding: 12px 24px; border-radius: 24px;
   background: var(--surface); border: 1px solid var(--border);
   color: var(--text); font-size: 0.9rem; font-weight: 600;

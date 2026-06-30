@@ -6,6 +6,7 @@ import FloatingLights from '@/components/FloatingLights.vue'
 const monthlyStats = inject('monthlyStats')
 const bingeStats = inject('bingeStats')
 const hourlyStats = inject('hourlyStats')
+const topMedia = inject('topMedia')
 const selectedYear = inject('selectedYear')
 
 const emit = defineEmits(['navigate'])
@@ -43,16 +44,26 @@ const bingeRatio = computed(() => {
 })
 
 const metrics = computed(() => [
-  { icon: '⏱️', label: '观影时长', value: hours.value, unit: '小时', color: 'var(--bean-green)', target: 4 },
-  { icon: '🎬', label: '观影总量', value: yearStats.value.count, unit: '部', color: 'var(--warm-amber)', target: 4 },
-  { icon: '🔥', label: '连贯追剧', value: bingeRatio.value, unit: '%', color: 'var(--soft-pink)', target: 4 },
-  { icon: '🌙', label: '深夜观影', value: nightRatio.value, unit: '%', color: 'var(--haze-blue)', target: 4 },
-  { icon: '📺', label: '完结剧集', value: yearStats.value.episodes, unit: '集', color: 'var(--purple)', target: 4 },
+  { label: '观影时长', value: hours.value, unit: '小时', color: 'var(--bean-green)', target: 5,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>' },
+  { label: '观影总量', value: yearStats.value.count, unit: '部', color: 'var(--warm-amber)', target: 3,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="8" x2="22" y2="8"/><line x1="7" y1="4" x2="7" y2="8"/><line x1="17" y1="4" x2="17" y2="8"/></svg>' },
+  { label: '连贯追剧', value: bingeRatio.value, unit: '%', color: 'var(--soft-pink)', target: 5,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 L4 14 L11 14 L10 22 L20 10 L13 10 Z"/></svg>' },
+  { label: '深夜观影', value: nightRatio.value, unit: '%', color: 'var(--haze-blue)', target: 5,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' },
+  { label: '完结剧集', value: yearStats.value.episodes, unit: '集', color: 'var(--purple)', target: 3,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>' },
 ])
+
+const posterStream = computed(() => {
+  return (topMedia.value || [])
+    .filter(m => m.poster_url)
+    .slice(0, 20)
+})
 
 function triggerBurst(el) {
   if (!el) return
-  const rect = el.getBoundingClientRect()
   for (let i = 0; i < 8; i++) {
     const p = document.createElement('span')
     p.className = 'burst-particle'
@@ -120,7 +131,7 @@ onMounted(() => {
           @mouseleave="onCardLeave(i)"
         >
           <div class="tilt-content">
-            <div class="metric-icon">{{ m.icon }}</div>
+            <div class="metric-icon" v-html="m.icon"></div>
             <div class="metric-value">
               <span :ref="el => cardRefs[i] = el">0</span>
               <span class="metric-unit">{{ m.unit }}</span>
@@ -129,6 +140,22 @@ onMounted(() => {
             <div class="metric-hint">点击查看详情 →</div>
           </div>
         </div>
+      </div>
+
+      <!-- 横向海报流 -->
+      <div class="poster-stream reveal-up" :class="{ visible }" v-if="posterStream.length">
+        <div class="stream-track">
+          <div
+            v-for="(m, i) in [...posterStream, ...posterStream]"
+            :key="i"
+            class="stream-poster"
+            :style="{ animationDelay: (i * 0.1) + 's' }"
+          >
+            <img :src="m.poster_url" alt="" loading="lazy" />
+          </div>
+        </div>
+        <div class="stream-fade-left" />
+        <div class="stream-fade-right" />
       </div>
     </div>
   </section>
@@ -157,10 +184,11 @@ onMounted(() => {
 }
 .tilt-content { transform: translateZ(30px); }
 .metric-icon {
-  font-size: 2rem; margin-bottom: 4px;
+  margin-bottom: 6px; color: var(--bean-green);
+  display: flex; justify-content: center;
   transition: transform 0.3s ease;
 }
-.metric-card:hover .metric-icon { transform: scale(1.2) rotate(-5deg); }
+.metric-card:hover .metric-icon { transform: scale(1.2); }
 .metric-value {
   font-size: 2.4rem; font-weight: 900; font-variant-numeric: tabular-nums;
   line-height: 1.1; display: flex; align-items: baseline; justify-content: center; gap: 4px;
@@ -175,9 +203,44 @@ onMounted(() => {
 }
 .metric-card:hover .metric-hint { opacity: 1; }
 
+/* 横向海报流 */
+.poster-stream {
+  margin-top: 48px; position: relative; overflow: hidden;
+  height: 140px; mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+.stream-track {
+  display: flex; gap: 12px;
+  animation: stream-scroll 60s linear infinite;
+  width: max-content;
+}
+.poster-stream:hover .stream-track {
+  animation-play-state: paused;
+}
+.stream-poster {
+  width: 94px; height: 140px; border-radius: var(--radius-sm);
+  overflow: hidden; flex-shrink: 0;
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+  transition: all var(--transition);
+}
+.stream-poster:hover {
+  transform: scale(1.15) translateY(-8px);
+  box-shadow: var(--shadow-hover); border-color: var(--border-bright);
+  z-index: 2;
+}
+.stream-poster img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+@keyframes stream-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 @media (max-width: 768px) {
   .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .metric-value { font-size: 1.8rem; }
   .metric-card { padding: 20px 12px; }
+  .poster-stream { height: 110px; }
+  .stream-poster { width: 73px; height: 110px; }
 }
 </style>

@@ -600,6 +600,45 @@ def get_diversity_index() -> dict:
     }
 
 
+def get_monthly_posters(limit_per_month: int = 15) -> list[dict]:
+    """按月聚合观影海报，用于前端月度海报墙展示。"""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT
+            substr(p.watched_at_local, 1, 7) AS year_month,
+            p.media_trakt_id AS trakt_id,
+            CASE WHEN p.media_type = 'episode'
+                 THEN SUBSTR(p.title, 1, INSTR(p.title, ' S') - 1)
+                 ELSE p.title
+            END AS title,
+            p.media_type,
+            m.poster_url,
+            COUNT(*) AS watch_count
+        FROM plays p
+        LEFT JOIN media m ON m.trakt_id = p.media_trakt_id
+        WHERE p.watched_at_local IS NOT NULL AND p.media_trakt_id IS NOT NULL
+        GROUP BY substr(p.watched_at_local, 1, 7), p.media_trakt_id
+        ORDER BY year_month DESC, watch_count DESC
+    """).fetchall()
+    conn.close()
+
+    months = {}
+    for r in rows:
+        ym = r["year_month"]
+        if ym not in months:
+            months[ym] = {"year_month": ym, "posters": []}
+        if len(months[ym]["posters"]) < limit_per_month:
+            months[ym]["posters"].append({
+                "trakt_id": r["trakt_id"],
+                "title": r["title"],
+                "media_type": r["media_type"],
+                "poster_url": r["poster_url"],
+                "watch_count": r["watch_count"],
+            })
+
+    return list(months.values())
+
+
 def get_runtime_preference() -> dict:
     """分析时长偏好：电影/剧集比例、平均时长。"""
     conn = get_conn()

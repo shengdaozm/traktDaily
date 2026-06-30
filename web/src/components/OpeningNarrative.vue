@@ -97,16 +97,16 @@ onMounted(() => {
 
       <div class="first-last stagger" :class="{ visible }" v-if="firstWatched || lastWatched">
         <div class="media-card bean-card" v-if="firstWatched">
-          <div class="card-label">🎬 年度第一部</div>
+          <div class="card-label">年度第一部</div>
           <img v-if="firstWatched.poster_url" class="card-poster" :src="firstWatched.poster_url" alt="" loading="lazy" />
-          <div class="card-poster placeholder" v-else>🎥</div>
+          <div class="card-poster placeholder" v-else><span>{{ firstWatched.title }}</span></div>
           <div class="card-title">{{ firstWatched.title }}</div>
           <div class="card-date">{{ formatDate(firstWatched.watched_at) }}</div>
         </div>
         <div class="media-card bean-card" v-if="lastWatched">
-          <div class="card-label">🏁 年度最新一部</div>
+          <div class="card-label">年度最新一部</div>
           <img v-if="lastWatched.poster_url" class="card-poster" :src="lastWatched.poster_url" alt="" loading="lazy" />
-          <div class="card-poster placeholder" v-else>📺</div>
+          <div class="card-poster placeholder" v-else><span>{{ lastWatched.title }}</span></div>
           <div class="card-title">{{ lastWatched.title }}</div>
           <div class="card-date">{{ formatDate(lastWatched.watched_at) }}</div>
         </div>
@@ -177,7 +177,8 @@ onMounted(() => {
 }
 .card-poster.placeholder {
   display: flex; align-items: center; justify-content: center;
-  font-size: 2rem; color: var(--text-dim);
+  padding: 6px; text-align: center;
+  font-size: 0.7rem; color: var(--text-dim);
 }
 .card-title {
   font-size: 0.85rem; font-weight: 600; color: var(--text-bright);

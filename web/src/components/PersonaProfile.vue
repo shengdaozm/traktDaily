@@ -117,7 +117,10 @@ onMounted(() => {
     <FloatingLights :count="3" />
     <div class="bg-glow" />
     <div class="section-content">
-      <p class="section-label reveal-up" :class="{ visible }">🧬 个人年度观影画像</p>
+      <p class="section-label reveal-up" :class="{ visible }">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M4 8 L4 4 L8 4 M16 4 L20 4 L20 8 M20 16 L20 20 L16 20 M8 20 L4 20 L4 16"/><circle cx="12" cy="12" r="4"/></svg>
+        个人年度观影画像
+      </p>
 
       <!-- 原型 -->
       <div class="archetype reveal-scale" :class="{ visible }">
@@ -223,7 +226,13 @@ onMounted(() => {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   padding: 14px 18px; border-radius: 14px; min-width: 120px;
 }
-.tag-icon { font-size: 1.6rem; }
+.tag-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(168,197,160,0.2), rgba(168,197,160,0.05));
+  border: 1px solid rgba(168,197,160,0.2);
+  font-size: 1rem; font-weight: 800; color: var(--bean-green-bright);
+}
 .tag-name { font-size: 0.9rem; font-weight: 700; color: var(--bean-green-bright); }
 .tag-desc { font-size: 0.72rem; color: var(--text-dim); text-align: center; }
 

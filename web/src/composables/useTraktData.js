@@ -4,6 +4,7 @@ const summary = shallowRef(null)
 const mediaList = ref([])
 const topMedia = ref([])
 const persona = shallowRef(null)
+const monthlyPosters = ref([])
 const recentMeta = ref({ total: 0, total_pages: 0, page_size: 100 })
 const recentPageCache = ref(new Map())
 const loading = ref(true)
@@ -28,12 +29,13 @@ export function useTraktData() {
     loading.value = true
     error.value = null
     try {
-      const [sumResp, mediaResp, topResp, metaResp, personaResp] = await Promise.all([
+      const [sumResp, mediaResp, topResp, metaResp, personaResp, monthlyPostersResp] = await Promise.all([
         safeFetch('data/summary.json'),
         safeFetch('data/media.json'),
         safeFetch('data/top_media.json'),
         safeFetch('data/recent_meta.json'),
         safeFetch('data/persona.json'),
+        safeFetch('data/monthly_posters.json'),
       ])
       if (!sumResp) throw new Error('核心数据文件 (summary.json) 加载失败，请先运行数据抓取')
       summary.value = await sumResp.json()
@@ -41,6 +43,7 @@ export function useTraktData() {
       topMedia.value = topResp ? await topResp.json() : []
       if (metaResp) recentMeta.value = await metaResp.json()
       if (personaResp) persona.value = await personaResp.json()
+      monthlyPosters.value = monthlyPostersResp ? await monthlyPostersResp.json() : []
 
       const firstPage = await fetchRecentPage(1)
       recentPageCache.value.set(1, firstPage)
@@ -119,7 +122,7 @@ export function useTraktData() {
   if (!loaded) loadData()
 
   return {
-    summary, mediaList, topMedia, persona, recentMeta, loading, error,
+    summary, mediaList, topMedia, persona, monthlyPosters, recentMeta, loading, error,
     mediaMap, lastUpdated, totalStats,
     monthlyStats, dailyGenreStats, genreStats,
     hourlyStats, weekdayStats, bingeStats, ratingPreference,
