@@ -62,7 +62,7 @@ export function useBackgroundLayer(sectionBackgrounds, activeSection) {
       rotationTimer = setInterval(() => {
         rotationIdx.value++
         updateBackground()
-      }, 8000)
+      }, 6000)
     }
   }
 

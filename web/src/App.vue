@@ -75,14 +75,28 @@ const sections = [
 ]
 
 const sectionBackgrounds = computed(() => {
-  const list = mediaList.value || []
-  const backdrops = list.filter(m => m.backdrop_url).map(m => m.backdrop_url)
+  const topM = topMedia.value || []
+  const mMap = mediaMap.value
+  if (!topM.length || !mMap) return []
+
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+
+  const recent = topM.filter(m => {
+    if (!m.last_watched) return false
+    return new Date(m.last_watched) >= sixMonthsAgo
+  })
+
+  const backdrops = recent
+    .map(m => mMap.get(m.trakt_id)?.backdrop_url)
+    .filter(Boolean)
   if (!backdrops.length) return []
 
   const genreCounts = {}
   const genreBackdropMap = {}
-  for (const m of list) {
-    if (!m.backdrop_url) continue
+  for (const m of recent) {
+    const backdrop = mMap.get(m.trakt_id)?.backdrop_url
+    if (!backdrop) continue
     let genres = m.genres
     if (typeof genres === 'string') {
       try { genres = JSON.parse(genres) } catch { genres = [] }
@@ -90,15 +104,15 @@ const sectionBackgrounds = computed(() => {
     if (Array.isArray(genres)) {
       for (const g of genres) {
         genreCounts[g] = (genreCounts[g] || 0) + 1
-        if (!genreBackdropMap[g]) genreBackdropMap[g] = m.backdrop_url
+        if (!genreBackdropMap[g]) genreBackdropMap[g] = backdrop
       }
     }
   }
   const sortedGenres = Object.entries(genreCounts).sort((a, b) => b[1] - a[1])
   const topGenreBackdrop = sortedGenres[0] ? genreBackdropMap[sortedGenres[0][0]] : ''
 
-  const top1 = (topMedia.value || [])[0]
-  const top1Backdrop = top1 ? mediaMap.value?.get(top1.trakt_id)?.backdrop_url || '' : ''
+  const top1 = recent[0]
+  const top1Backdrop = top1 ? mMap.get(top1.trakt_id)?.backdrop_url || '' : ''
 
   const n = backdrops.length
   function pick(start, count) {
