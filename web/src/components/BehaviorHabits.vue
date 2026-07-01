@@ -217,7 +217,6 @@ onMounted(() => {
 .behavior-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
   padding: 60px 24px;
-  background: linear-gradient(180deg, #11151a 0%, var(--cinema-black) 100%);
 }
 .section-content { max-width: 760px; width: 100%; }
 

@@ -92,7 +92,6 @@ onMounted(() => {
 .archive-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
   padding: var(--section-gap) var(--page-margin);
-  background: var(--bg);
 }
 .section-content { max-width: 860px; width: 100%; text-align: center; }
 

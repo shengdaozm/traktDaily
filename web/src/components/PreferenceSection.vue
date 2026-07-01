@@ -203,7 +203,6 @@ onMounted(() => {
 .preference-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
   padding: 60px 24px;
-  background: linear-gradient(180deg, var(--cinema-black) 0%, #11151a 100%);
 }
 .section-content { max-width: 760px; width: 100%; }
 

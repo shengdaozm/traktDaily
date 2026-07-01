@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, onUnmounted } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const props = defineProps({
   mediaList: { type: Array, default: () => [] },
@@ -8,46 +8,16 @@ const emit = defineEmits(['start'])
 
 const year = new Date().getFullYear()
 const showContent = ref(false)
-const currentBgIdx = ref(0)
-
-const backdrops = computed(() => {
-  return props.mediaList
-    .filter(m => m.backdrop_url)
-    .slice(0, 6)
-    .map(m => m.backdrop_url)
-})
 
 const titleChars = '你的年度观影宇宙'.split('')
 
-let bgTimer = null
-
 onMounted(() => {
   setTimeout(() => showContent.value = true, 200)
-  if (backdrops.value.length > 1) {
-    bgTimer = setInterval(() => {
-      currentBgIdx.value = (currentBgIdx.value + 1) % backdrops.value.length
-    }, 8000)
-  }
-})
-
-onUnmounted(() => {
-  if (bgTimer) clearInterval(bgTimer)
 })
 </script>
 
 <template>
   <section class="welcome-section">
-    <div class="backdrop-carousel" v-if="backdrops.length">
-      <div
-        v-for="(url, i) in backdrops"
-        :key="i"
-        class="backdrop-slide"
-        :class="{ active: currentBgIdx === i }"
-        :style="{ backgroundImage: `url(${url})` }"
-      />
-    </div>
-    <div class="backdrop-overlay" />
-
     <div class="welcome-content" :class="{ show: showContent }">
       <div class="welcome-brand">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -86,21 +56,7 @@ onUnmounted(() => {
 <style scoped>
 .welcome-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  position: relative; overflow: hidden; text-align: center;
-  background: var(--bg);
-}
-
-.backdrop-carousel { position: absolute; inset: 0; }
-.backdrop-slide {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center;
-  opacity: 0; transition: opacity 2s ease;
-}
-.backdrop-slide.active { opacity: 1; }
-
-.backdrop-overlay {
-  position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(14,16,20,0.7) 0%, rgba(14,16,20,0.55) 50%, rgba(14,16,20,0.85) 100%);
+  position: relative; text-align: center;
 }
 
 .welcome-content {

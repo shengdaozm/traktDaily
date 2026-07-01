@@ -233,7 +233,6 @@ onMounted(() => {
 .poster-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
   padding: var(--section-gap) var(--page-margin);
-  background: var(--bg);
 }
 .section-content { max-width: 760px; width: 100%; text-align: center; position: relative; z-index: 1; }
 

@@ -188,7 +188,6 @@ onMounted(() => {
 .persona-section {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
   padding: var(--section-gap) var(--page-margin); position: relative;
-  background: var(--bg);
 }
 .section-content { max-width: 720px; width: 100%; position: relative; z-index: 1; }
 
