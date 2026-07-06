@@ -4,11 +4,11 @@
 读取 data/trakt.db，生成 web/public/data/ 目录下的 JSON 文件供前端消费。
 
 输出文件：
-  summary.json       → 总览统计（月度趋势、类型分布、热力图数据）
-  media.json         → 媒体库（每个剧/电影的详情）
-  top_media.json     → 观影排行预聚合（Top 50，含海报）
-  recent_meta.json   → 最近观影分页元信息（总数、总页数）
-  recent_1.json ~ recent_N.json → 最近观影分页（每页 100 条）
+  summary.json         → 总览统计（月度趋势、类型分布、热力图数据）
+  media.json           → 媒体库（每个剧/电影的详情）
+  top_media.json       → 观影排行预聚合（Top 50，含海报）
+  recent_meta.json     → 最近观影月度索引（总数、各月条数）
+  recent_YYYY-MM.json  → 按月分文件的观影记录（仅当前月会更新）
 """
 
 import json
@@ -36,8 +36,6 @@ from scripts.db import (
     ensure_dirs,
 )
 
-PAGE_SIZE = 100
-
 
 def _write_json(filename, data):
     """写入 JSON 文件。"""
@@ -46,11 +44,12 @@ def _write_json(filename, data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-def _cleanup_old_pages():
-    """清理旧的 recent_*.json 分页文件（防止页数减少后残留旧文件）。"""
+def _cleanup_old_recent_files():
+    """清理旧的 recent_*.json 文件（包括数字分页和月份格式）。"""
     pattern = os.path.join(WEB_DATA_DIR, "recent_*.json")
     for f in glob.glob(pattern):
-        os.remove(f)
+        if not f.endswith("recent_meta.json"):
+            os.remove(f)
 
 
 def run():
@@ -125,25 +124,30 @@ def run():
     _write_json("top_media.json", top_media)
     print(f"[Render] 已生成 top_media.json（{len(top_media)} 个媒体）")
 
-    # ── 最近观影记录（分页） ──
+    # ── 最近观影记录（按月分文件） ──
     all_plays = get_all_plays()
-    total_plays = len(all_plays)
-    total_pages = max(1, (total_plays + PAGE_SIZE - 1) // PAGE_SIZE)
 
-    _cleanup_old_pages()
+    months_map = {}
+    for play in all_plays:
+        ym = (play.get("watched_at_local") or "")[:7]
+        if ym:
+            months_map.setdefault(ym, []).append(play)
 
-    for page in range(1, total_pages + 1):
-        start = (page - 1) * PAGE_SIZE
-        end = start + PAGE_SIZE
-        page_data = all_plays[start:end]
-        _write_json(f"recent_{page}.json", page_data)
+    sorted_months = sorted(months_map.keys(), reverse=True)
+
+    _cleanup_old_recent_files()
+
+    month_info = []
+    for ym in sorted_months:
+        plays = months_map[ym]
+        _write_json(f"recent_{ym}.json", plays)
+        month_info.append({"month": ym, "count": len(plays)})
 
     _write_json("recent_meta.json", {
-        "total": total_plays,
-        "total_pages": total_pages,
-        "page_size": PAGE_SIZE,
+        "total": len(all_plays),
+        "months": month_info,
     })
-    print(f"[Render] 已生成 recent 分页（{total_plays} 条，{total_pages} 页，每页 {PAGE_SIZE} 条）")
+    print(f"[Render] 已生成 recent 月度文件（{len(all_plays)} 条，{len(sorted_months)} 个月）")
 
     # ── 月度海报数据 ──
     monthly_posters = get_monthly_posters()

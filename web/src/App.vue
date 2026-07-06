@@ -21,6 +21,7 @@ const {
   countryStats, freshnessStats, watchPattern, diversityIndex,
   runtimePreference, firstWatched, lastWatched, availableYears,
   monthlyPosters,
+  fetchRecentMonth, recentMonthCache,
 } = useTraktData()
 
 provide('summary', summary)
@@ -45,6 +46,8 @@ provide('runtimePreference', runtimePreference)
 provide('firstWatched', firstWatched)
 provide('lastWatched', lastWatched)
 provide('availableYears', availableYears)
+provide('fetchRecentMonth', fetchRecentMonth)
+provide('recentMonthCache', recentMonthCache)
 
 const resizeCallbacks = ref([])
 function registerResize(fn) { resizeCallbacks.value.push(fn) }

@@ -2,7 +2,7 @@
 SQLite 数据库封装
 -----------------
 提供建表、CRUD、按月聚合等操作。所有观影记录和媒体元数据统一存储在 data/trakt.db 中。
-plays 表存储每次观影事件 + 核心元数据，media 表存储完整的媒体详情。
+plays 表每个 trakt_id 只保留一条记录（重复观看合并为最新时间），media 表存储完整的媒体详情。
 """
 
 import sqlite3
@@ -40,8 +40,8 @@ def init_db():
     cursor = conn.cursor()
 
     # ── 观影记录表 ──
-    # 每条记录对应一次 Trakt 观影历史事件，同时存储 Trakt 返回的核心元数据
-    # UNIQUE(trakt_id, watched_at) 防止重复写入同一条记录
+    # 每个 trakt_id 只保留一条记录，重复观看时更新为最新的 watched_at
+    # UNIQUE(trakt_id) 确保同一媒体不重复统计
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS plays (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,7 +63,7 @@ def init_db():
             watched_at_local TEXT,
             media_trakt_id INTEGER,
             created_at  TEXT    DEFAULT (datetime('now')),
-            UNIQUE(trakt_id, watched_at)
+            UNIQUE(trakt_id)
         )
     """)
 
@@ -124,34 +124,109 @@ def init_db():
     _add_column_if_missing(conn, "plays", "watched_at_local", "TEXT")
     _add_column_if_missing(conn, "plays", "media_trakt_id", "INTEGER")
 
+    _migrate_plays_to_unique_trakt_id(conn)
+
     conn.commit()
     conn.close()
 
 
+def _migrate_plays_to_unique_trakt_id(conn):
+    """将 plays 表的 UNIQUE 约束从 (trakt_id, watched_at) 迁移为 (trakt_id)，
+    合并同一 trakt_id 的多条记录，保留最新的 watched_at。"""
+    schema_row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='plays'"
+    ).fetchone()
+    if not schema_row:
+        return
+
+    schema_sql = schema_row["sql"]
+    if "trakt_id, watched_at" not in schema_sql:
+        return
+
+    print("[DB] 迁移 plays 表：UNIQUE(trakt_id, watched_at) → UNIQUE(trakt_id)，合并重复记录")
+
+    conn.execute("ALTER TABLE plays RENAME TO plays_old")
+
+    conn.execute("""
+        CREATE TABLE plays (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            trakt_id    INTEGER NOT NULL,
+            tmdb_id     INTEGER,
+            imdb_id     TEXT,
+            title       TEXT    NOT NULL,
+            year        INTEGER,
+            media_type  TEXT    NOT NULL,
+            season      INTEGER,
+            number      INTEGER,
+            runtime     INTEGER,
+            genres      TEXT,
+            overview    TEXT,
+            rating      REAL,
+            votes       INTEGER,
+            action      TEXT,
+            watched_at  TEXT    NOT NULL,
+            watched_at_local TEXT,
+            media_trakt_id INTEGER,
+            created_at  TEXT    DEFAULT (datetime('now')),
+            UNIQUE(trakt_id)
+        )
+    """)
+
+    conn.execute("""
+        INSERT INTO plays (trakt_id, tmdb_id, imdb_id, title, year, media_type,
+                           season, number, runtime, genres, overview, rating, votes,
+                           action, watched_at, watched_at_local, media_trakt_id, created_at)
+        SELECT trakt_id, tmdb_id, imdb_id, title, year, media_type,
+               season, number, runtime, genres, overview, rating, votes,
+               action, watched_at, watched_at_local, media_trakt_id, created_at
+        FROM plays_old p
+        WHERE p.watched_at = (
+            SELECT MAX(p2.watched_at) FROM plays_old p2 WHERE p2.trakt_id = p.trakt_id
+        )
+    """)
+
+    conn.execute("DROP TABLE plays_old")
+
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_plays_watched_at ON plays(watched_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_plays_media_type ON plays(media_type)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_plays_trakt_id ON plays(trakt_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_plays_tmdb_id ON plays(tmdb_id)")
+
+    print("[DB] plays 表迁移完成")
+
+
 def insert_play(play: dict) -> bool:
     """
-    插入一条观影记录，自动去重。
+    插入或更新一条观影记录。
+    同一 trakt_id 只保留一条记录，重复观看时更新为最新的 watched_at。
     参数:
         play: 包含 trakt_id, tmdb_id, imdb_id, title, year, media_type,
               season, number, runtime, genres, overview, rating, votes,
-              action, watched_at 的字典
+              action, watched_at, watched_at_local, media_trakt_id 的字典
     返回:
-        True 表示新增成功，False 表示已存在（重复）
+        True 表示新增或更新成功，False 表示记录已存在且观看时间未更新
     """
     conn = get_conn()
+    fields = [
+        "trakt_id", "tmdb_id", "imdb_id", "title", "year", "media_type",
+        "season", "number", "runtime", "genres", "overview", "rating", "votes",
+        "action", "watched_at", "watched_at_local", "media_trakt_id",
+    ]
+    values = {k: play.get(k) for k in fields}
+    columns = ", ".join(fields)
+    placeholders = ", ".join(f":{k}" for k in fields)
+    update_clause = ", ".join(f"{k} = excluded.{k}" for k in fields if k != "trakt_id")
+
     try:
-        conn.execute("""
-            INSERT INTO plays (trakt_id, tmdb_id, imdb_id, title, year, media_type,
-                               season, number, runtime, genres, overview, rating, votes,
-                               action, watched_at, watched_at_local, media_trakt_id)
-            VALUES (:trakt_id, :tmdb_id, :imdb_id, :title, :year, :media_type,
-                    :season, :number, :runtime, :genres, :overview, :rating, :votes,
-                    :action, :watched_at, :watched_at_local, :media_trakt_id)
-        """, play)
+        cursor = conn.execute(f"""
+            INSERT INTO plays ({columns})
+            VALUES ({placeholders})
+            ON CONFLICT(trakt_id) DO UPDATE SET
+                {update_clause}
+            WHERE excluded.watched_at > plays.watched_at
+        """, values)
         conn.commit()
-        return True
-    except sqlite3.IntegrityError:
-        return False
+        return cursor.rowcount > 0
     finally:
         conn.close()
 

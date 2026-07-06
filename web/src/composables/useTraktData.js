@@ -5,8 +5,8 @@ const mediaList = ref([])
 const topMedia = ref([])
 const persona = shallowRef(null)
 const monthlyPosters = ref([])
-const recentMeta = ref({ total: 0, total_pages: 0, page_size: 100 })
-const recentPageCache = ref(new Map())
+const recentMeta = ref({ total: 0, months: [] })
+const recentMonthCache = ref(new Map())
 const loading = ref(true)
 const error = ref(null)
 
@@ -45,8 +45,10 @@ export function useTraktData() {
       if (personaResp) persona.value = await personaResp.json()
       monthlyPosters.value = monthlyPostersResp ? await monthlyPostersResp.json() : []
 
-      const firstPage = await fetchRecentPage(1)
-      recentPageCache.value.set(1, firstPage)
+      const firstMonth = recentMeta.value?.months?.[0]?.month
+      if (firstMonth) {
+        await fetchRecentMonth(firstMonth)
+      }
 
       loaded = true
     } catch (err) {
@@ -57,23 +59,16 @@ export function useTraktData() {
     }
   }
 
-  async function fetchRecentPage(page) {
-    if (recentPageCache.value.has(page)) {
-      return recentPageCache.value.get(page)
-    }
-    const resp = await safeFetch(`data/recent_${page}.json`)
-    if (!resp) return []
+  async function fetchRecentMonth(month) {
+    if (recentMonthCache.value.has(month)) return
+    const resp = await safeFetch(`data/recent_${month}.json`)
+    if (!resp) return
     try {
       const data = await resp.json()
-      recentPageCache.value.set(page, data)
-      return data
+      recentMonthCache.value.set(month, data)
     } catch {
-      return []
+      // ignore
     }
-  }
-
-  function getRecentPage(page) {
-    return recentPageCache.value.get(page) || []
   }
 
   const mediaMap = computed(() => {
@@ -128,6 +123,6 @@ export function useTraktData() {
     hourlyStats, weekdayStats, bingeStats, ratingPreference,
     countryStats, freshnessStats, watchPattern, diversityIndex,
     runtimePreference, firstWatched, lastWatched, availableYears,
-    loadData, fetchRecentPage, getRecentPage,
+    loadData, fetchRecentMonth, recentMonthCache,
   }
 }

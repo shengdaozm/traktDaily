@@ -3,6 +3,8 @@
 name: Fetch Trakt Data
 
 on:
+  push:
+    branches: [main]
   schedule:
     # 每 2 小时运行一次（UTC 时间）
     - cron: '0 */2 * * *'
