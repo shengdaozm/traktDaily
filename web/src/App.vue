@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, provide, onMounted, onUnmounted } from 'vue'
+import { ref, computed, provide, shallowRef, onMounted, onUnmounted } from 'vue'
 import { useTraktData } from '@/composables/useTraktData'
 import { useBackgroundLayer } from '@/composables/useBackgroundLayer'
 import WelcomePage from '@/components/WelcomePage.vue'
