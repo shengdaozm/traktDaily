@@ -75,7 +75,7 @@ const scoreLevel = computed(() => {
   if (s >= 70) return { label: '大概率喜欢', emoji: '⭐', color: '#86A89C' }
   if (s >= 55) return { label: '可以尝试', emoji: '🤔', color: '#f59e0b' }
   if (s >= 40) return { label: '兴趣一般', emoji: '😐', color: '#f97316' }
-  return { label: '大概率不感兴趣', emoji: '❌', color: '#ef4444' })
+  return { label: '大概率不感兴趣', emoji: '❌', color: '#ef4444' }
 })
 
 // 清除搜索
