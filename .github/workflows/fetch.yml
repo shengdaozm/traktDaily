@@ -69,9 +69,20 @@ jobs:
           LLM_API_BASE: ${{ secrets.LLM_API_BASE }}
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
 
-      # ⑥ 生成前端 JSON 数据
+      # ⑤d 抓取演员/导演数据（增量模式，只拉缺 cast 的媒体）
+      - name: 抓取演员数据
+        continue-on-error: true
+        run: python -m scripts.fetch_cast
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
+      # ⑥ 生成前端 JSON 数据（内部已调用 render_profile 生成画像/推荐 JSON）
       - name: 生成前端数据
         run: python -m scripts.render
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_API_BASE: ${{ secrets.LLM_API_BASE }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
 
       # ⑦ 推送数据到私有仓库（数据库 + 前端 JSON）
       - name: 推送数据到私有仓库

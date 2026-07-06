@@ -12,6 +12,7 @@ import PersonaProfile from '@/components/PersonaProfile.vue'
 import AnnualRankings from '@/components/AnnualRankings.vue'
 import SharePoster from '@/components/SharePoster.vue'
 import YearArchive from '@/components/YearArchive.vue'
+import SearchScore from '@/components/SearchScore.vue'
 
 const {
   summary, mediaList, topMedia, persona, recentMeta, loading, error,
@@ -23,6 +24,16 @@ const {
   monthlyPosters,
   fetchRecentMonth, recentMonthCache,
 } = useTraktData()
+
+// 用户画像数据（用于打分）
+const userProfile = shallowRef(null)
+onMounted(async () => {
+  try {
+    const resp = await fetch('data/profile.json')
+    if (resp.ok) userProfile.value = await resp.json()
+  } catch { /* 画像未生成，静默跳过 */ }
+})
+provide('profile', userProfile)
 
 provide('summary', summary)
 provide('mediaList', mediaList)
@@ -75,6 +86,7 @@ const sections = [
   { id: 'rankings', label: '榜单' },
   { id: 'poster', label: '海报' },
   { id: 'archive', label: '历年' },
+  { id: 'search-score', label: '打分' },
 ]
 
 const sectionBackgrounds = computed(() => {
@@ -229,6 +241,7 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
         <div :id="`section-7`"><AnnualRankings /></div>
         <div :id="`section-8`"><SharePoster /></div>
         <div :id="`section-9`"><YearArchive /></div>
+        <div :id="`section-10`"><SearchScore /></div>
       </template>
     </div>
   </div>

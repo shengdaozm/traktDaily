@@ -1,0 +1,1009 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-07-06",
+  "description": "用户评分数据。手动编辑此文件：填 user_rating (1-10)，其他字段可选",
+  "max_entries": 100,
+  "filled_count": 0,
+  "ratings": [
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    },
+    {
+      "trakt_id": null,
+      "title": "",
+      "year": null,
+      "media_type": "show",
+      "user_rating": null,
+      "completed": null,
+      "rewatched": 0,
+      "notes": ""
+    }
+  ]
+}

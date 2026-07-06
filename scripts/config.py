@@ -31,6 +31,8 @@ TMDB_LANG = "zh-CN"
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SQLite 数据库文件路径
 DB_PATH = os.path.join(PROJECT_ROOT, "data", "trakt.db")
+# 用户评分数据（手动维护的 JSON 文件）
+USER_RATINGS_PATH = os.path.join(PROJECT_ROOT, "data", "user_ratings.json")
 # 报告 JSON 输出目录
 REPORTS_DIR = os.path.join(PROJECT_ROOT, "data", "reports")
 # 前端 JSON 数据目录
@@ -43,3 +45,9 @@ LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://api.deepseek.com/v1")
 LLM_MODEL = os.environ.get("LLM_MODEL", "deepseek-chat")
 # persona.json 缓存天数，避免每次都调用大模型
 PERSONA_CACHE_DAYS = 7
+
+# ── 画像构建配置 ──────────────────────────────────────────
+# 用户评分数达到此阈值时，强制重建画像（确保画像质量）
+PROFILE_REBUILD_THRESHOLD = 5
+# 画像版本号，表结构变更时递增
+PROFILE_VERSION = "2.0"

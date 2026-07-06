@@ -126,6 +126,53 @@ def init_db():
 
     _migrate_plays_to_unique_trakt_id(conn)
 
+    # ── 用户评分表已移除，评分数据改存 data/user_ratings.json ──
+
+    # ── 演员/导演映射表 ──
+    # 关联媒体和参与人员，用于 celebrity bias 分析
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cast_crew (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            media_trakt_id   INTEGER NOT NULL,
+            person_id        INTEGER NOT NULL,
+            person_name      TEXT    NOT NULL,
+            person_role      TEXT    NOT NULL,
+            character_name   TEXT,
+            UNIQUE(media_trakt_id, person_id)
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cast_media ON cast_crew(media_trakt_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cast_person ON cast_crew(person_id)")
+
+    # ── 演员偏好缓存表 ──
+    # 记录每个演员对用户的偏好影响（celebrity_bonus）
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cast_preference (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            person_id             INTEGER NOT NULL UNIQUE,
+            person_name           TEXT    NOT NULL,
+            role                  TEXT,
+            appearances_in_rated  INTEGER DEFAULT 0,
+            avg_user_rating       REAL,
+            community_avg         REAL,
+            celebrity_bonus       REAL    DEFAULT 0,
+            affinity_score        REAL    DEFAULT 0,
+            last_updated          TEXT    DEFAULT (datetime('now'))
+        )
+    """)
+
+    # ── 用户画像缓存表 ──
+    # 存储 9 维画像的 JSON，避免每次重新计算
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_profile (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            version       TEXT    NOT NULL,
+            profile_json  TEXT    NOT NULL,
+            generated_at  TEXT    DEFAULT (datetime('now')),
+            hash          TEXT
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -737,3 +784,184 @@ def get_runtime_preference() -> dict:
         "movie_ratio": round(movie_count / max(total_count, 1), 3),
         "total_minutes": total_minutes,
     }
+
+# ═══════════════════════════════════════════════════════════
+# 画像系统辅助函数
+# ═══════════════════════════════════════════════════════════
+
+
+def load_user_ratings() -> dict:
+    """
+    从 data/user_ratings.json 加载用户评分数据。
+    返回: {"ratings": [...], "meta": {...}}
+    只保留 user_rating 非 null 的条目。
+    """
+    import os as _os
+    from scripts.config import USER_RATINGS_PATH
+
+    if not _os.path.exists(USER_RATINGS_PATH):
+        return {"ratings": [], "meta": {}}
+
+    try:
+        with open(USER_RATINGS_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {"ratings": [], "meta": {}}
+
+    # 兼容两种格式
+    if isinstance(data, dict):
+        ratings = data.get("ratings", [])
+        meta = {k: v for k, v in data.items() if k != "ratings"}
+    elif isinstance(data, list):
+        ratings = data
+        meta = {}
+    else:
+        return {"ratings": [], "meta": {}}
+
+    rated = [r for r in ratings if r.get("user_rating") is not None]
+    return {"ratings": rated, "meta": meta, "_all_ratings": ratings}
+
+
+def get_rated_shows() -> list[dict]:
+    """获取所有已评分的剧集，按评分降序。"""
+    data = load_user_ratings()
+    shows = [r for r in data["ratings"] if r.get("media_type") == "show"]
+    return sorted(shows, key=lambda x: x.get("user_rating", 0) or 0, reverse=True)
+
+
+def get_rated_movies() -> list[dict]:
+    """获取所有已评分的电影，按评分降序。"""
+    data = load_user_ratings()
+    movies = [r for r in data["ratings"] if r.get("media_type") == "movie"]
+    return sorted(movies, key=lambda x: x.get("user_rating", 0) or 0, reverse=True)
+
+
+def upsert_cast_crew(media_trakt_id: int, cast_list: list[dict]):
+    """
+    批量插入演员/导演数据到 cast_crew 表。
+    cast_list: [{"person_id": 123, "person_name": "...", "person_role": "actor", "character_name": "..."}, ...]
+    """
+    conn = get_conn()
+    for person in cast_list:
+        conn.execute("""
+            INSERT INTO cast_crew (media_trakt_id, person_id, person_name, person_role, character_name)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(media_trakt_id, person_id) DO UPDATE SET
+                person_name = excluded.person_name,
+                person_role = excluded.person_role,
+                character_name = excluded.character_name
+        """, (
+            media_trakt_id,
+            person.get("person_id", 0),
+            person.get("person_name", ""),
+            person.get("person_role", "actor"),
+            person.get("character_name"),
+        ))
+    conn.commit()
+    conn.close()
+
+
+def get_cast_for_media(media_trakt_id: int) -> list[dict]:
+    """获取某媒体的全部演员/导演列表。"""
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT * FROM cast_crew WHERE media_trakt_id = ? ORDER BY person_role, person_id",
+        (media_trakt_id,)
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_cast_preference(person_id: int) -> dict | None:
+    """按 person_id 查询演员偏好缓存。"""
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT * FROM cast_preference WHERE person_id = ?",
+        (person_id,)
+    ).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def upsert_cast_preference(pref: dict):
+    """插入或更新演员偏好缓存。"""
+    conn = get_conn()
+    conn.execute("""
+        INSERT INTO cast_preference (person_id, person_name, role, appearances_in_rated,
+                                     avg_user_rating, community_avg, celebrity_bonus,
+                                     affinity_score, last_updated)
+        VALUES (:person_id, :person_name, :role, :appearances_in_rated,
+                :avg_user_rating, :community_avg, :celebrity_bonus,
+                :affinity_score, datetime('now'))
+        ON CONFLICT(person_id) DO UPDATE SET
+            person_name = excluded.person_name,
+            role = excluded.role,
+            appearances_in_rated = excluded.appearances_in_rated,
+            avg_user_rating = excluded.avg_user_rating,
+            community_avg = excluded.community_avg,
+            celebrity_bonus = excluded.celebrity_bonus,
+            affinity_score = excluded.affinity_score,
+            last_updated = datetime('now')
+    """, pref)
+    conn.commit()
+    conn.close()
+
+
+def get_all_cast_preferences() -> list[dict]:
+    """获取全部演员偏好缓存，按 celebrity_bonus 降序。"""
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT * FROM cast_preference ORDER BY celebrity_bonus DESC"
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def save_user_profile(version: str, profile_json_str: str, content_hash: str | None = None):
+    """保存画像到缓存表。"""
+    conn = get_conn()
+    conn.execute("""
+        INSERT INTO user_profile (version, profile_json, hash, generated_at)
+        VALUES (?, ?, ?, datetime('now'))
+    """, (version, profile_json_str, content_hash))
+    conn.commit()
+    conn.close()
+
+
+def get_latest_cached_profile() -> dict | None:
+    """获取最新的缓存画像（返回解析后的 dict）。"""
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT * FROM user_profile ORDER BY generated_at DESC LIMIT 1"
+    ).fetchone()
+    conn.close()
+    if not row:
+        return None
+    result = dict(row)
+    result["profile"] = json.loads(result.pop("profile_json"))
+    return result
+
+
+def get_media_cast_map() -> dict[int, list[dict]]:
+    """
+    获取所有媒体的演员映射（用于画像构建）。
+    返回: {media_trakt_id: [{person_id, person_name, person_role, character_name}, ...]}
+    """
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT media_trakt_id, person_id, person_name, person_role, character_name FROM cast_crew"
+    ).fetchall()
+    conn.close()
+
+    result: dict[int, list[dict]] = {}
+    for r in rows:
+        mid = r["media_trakt_id"]
+        if mid not in result:
+            result[mid] = []
+        result[mid].append({
+            "person_id": r["person_id"],
+            "person_name": r["person_name"],
+            "person_role": r["person_role"],
+            "character_name": r["character_name"],
+        })
+    return result

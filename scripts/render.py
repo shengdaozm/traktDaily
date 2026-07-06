@@ -154,6 +154,19 @@ def run():
     _write_json("monthly_posters.json", monthly_posters)
     print(f"[Render] 已生成 monthly_posters.json（{len(monthly_posters)} 个月）")
 
+    # ── TMDB API 配置（前端搜索打分用） ──
+    tmdb_key = os.environ.get('TMDB_API_KEY', '')
+    if tmdb_key:
+        _write_json("tmdb_config.json", {"api_key": tmdb_key})
+        print("[Render] 已生成 tmdb_config.json")
+
+    # ── 画像 & 推荐数据 ──
+    try:
+        from scripts.render_profile import run as render_profile_run
+        render_profile_run()
+    except Exception as e:
+        print(f"[Render] 画像生成跳过（{e}）")
+
 
 if __name__ == "__main__":
     run()
