@@ -180,24 +180,46 @@ def build_prompt(data):
     top_countries = data["country"][:5]
     hourly_dist = {h["hour"]: h["count"] for h in data["hourly"] if h["hour"] is not None}
 
-    prompt = f"""你是一位专业的观影行为分析师。请基于以下用户的观影统计数据，生成一份有温度、有洞察力的人格画像分析。
+    # 找出最活跃的时段
+    peak_hours = sorted(hourly_dist.items(), key=lambda x: x[1], reverse=True)[:3]
+    peak_hours_str = ", ".join(f"{h}点({c}次)" for h, c in peak_hours if h is not None)
 
-要求：
-1. archetype: 用一个富有诗意的词定义用户的"观影原型"（4-8字，如"深夜故事旅人"）
-2. archetype_description: 一句话描述这个原型
-3. tags: 3-5个人格标签，每个包含 icon(单个中文字)、name(2-6字)、desc(一句话描述)
-4. radar: 8个维度评分(0-100整数)，维度为 immersion(沉浸度)、quality(精品度)、diversity(广度)、depth(深度)、night_owl(夜猫)、freshness(新鲜度)、global(国际化)、binge(连贯追剧)
-5. narrative: 100-200字的人格叙事文案，像朋友在跟你聊天，有洞察力，发现数据中的有趣模式
-6. highlights: 3-5个观影高光时刻（简短一句话）
-7. personality_traits: 基于大五人格模型(openness/conscientiousness/extraversion/agreeableness/neuroticism)，每项给出"高/中/低 — 简短解释"
+    prompt = f"""你是一个有趣的灵魂，同时也是一位深谙人性的观影行为分析大师。你看过无数人的观影数据，但你不会用模板化的方式解读——每个人在你眼里都是独一无二的故事。
 
-语气要求：温暖、有洞察力、不机械。可以大胆推测但要有数据支撑。用中文。
+现在，请根据下面这位用户的观影数据，用你自己的方式画出 ta 的「观影灵魂画像」。
 
-请严格返回JSON格式，不要包含markdown代码块标记。
+不要给我千篇一律的标签和评分。我想看到的是：
+- 一个让人眼前一亮的「观影原型」——不是"深夜追剧人"这种烂大街的词，而是真正从数据里长出来的独特定义
+- 用讲故事的方式写一段叙事文案，像你在跟朋友聊这个人一样自然，有细节、有洞察、有惊喜发现，别像报告
+- 几个有趣的标签和雷达图维度，但名字和描述要有创意，别太正经
+- 如果数据里有什么矛盾或有趣的点（比如自称杂食但其实偏科严重，或者深夜 binge 却给低分），大胆点出来
 
-用户观影统计数据：
+返回 JSON，字段如下（但内容请自由发挥，别被字段名限制住）：
+{{
+  "archetype": "观影原型名称（4-8字，要有画面感）",
+  "archetype_description": "一句话点题",
+  "tags": [{{"icon": "一个中文字", "name": "标签名", "desc": "描述"}}],
+  "radar": {{
+    "immersion": 0, "quality": 0, "diversity": 0, "depth": 0,
+    "night_owl": 0, "freshness": 0, "global": 0, "binge": 0
+  }},
+  "narrative": "100-200字的叙事文案，像聊天一样",
+  "highlights": ["高光时刻1", "高光时刻2"],
+  "personality_traits": {{
+    "openness": "高/中/低 — 解释",
+    "conscientiousness": "高/中/低 — 解释",
+    "extraversion": "高/中/低 — 解释",
+    "agreeableness": "高/中/低 — 解释",
+    "neuroticism": "高/中/低 — 解释"
+  }}
+}}
+
+radar 各维度 0-100 整数。返回纯 JSON，不要 markdown 代码块。
+
+---
+用户观影数据 ---
 - 总观影次数: {data['total_plays']}
-- 总时长: {data['runtime']['total_minutes']} 分钟
+- 总时长: {data['runtime']['total_minutes']} 分钟（约 {data['runtime']['total_minutes'] // 60} 小时）
 - 深夜观影比例(22-02点): {data['night_ratio']:.1%}
 - 周末观影比例: {data['weekend_ratio']:.1%}
 - Binge指数(同剧间隔<2h): {data['binge']['binge_ratio']:.1%}
@@ -209,6 +231,7 @@ def build_prompt(data):
 - 内容新鲜度: {data['freshness']['freshness_score']}/100 (平均首播年份: {data['freshness']['avg_year']})
 - 观影稳定性: {data['pattern']['stability']}/100 (模式: {data['pattern']['pattern_type']})
 - 电影占比: {data['runtime']['movie_ratio']:.1%}
+- 最活跃时段: {peak_hours_str}
 - 小时分布: {json.dumps(hourly_dist, ensure_ascii=False)}
 """
 
@@ -220,6 +243,14 @@ def call_llm(data):
 
     prompt = build_prompt(data)
 
+    # 截取 prompt 前 200 字用于日志预览
+    prompt_preview = prompt.replace('\n', ' ')[:200]
+    print(f"[Persona] 🤖 大模型调用中...")
+    print(f"[Persona] 📍 API: {LLM_API_BASE}")
+    print(f"[Persona] 📍 模型: {LLM_MODEL}")
+    print(f"[Persona] 📍 API Key: {'已配置 (' + LLM_API_KEY[:6] + '...' + LLM_API_KEY[-4:] + ')' if LLM_API_KEY else '❌ 未配置'}")
+    print(f"[Persona] 📝 Prompt 预览: {prompt_preview}...")
+
     try:
         resp = requests.post(
             f"{LLM_API_BASE}/chat/completions",
@@ -230,26 +261,44 @@ def call_llm(data):
             json={
                 "model": LLM_MODEL,
                 "messages": [
-                    {"role": "system", "content": "你是一位专业的观影行为分析师，擅长从观影数据中洞察人格特质。你的分析温暖、有洞察力、不机械。"},
+                    {"role": "system", "content": "你是一个有趣的灵魂，也是一位深谙人性的观影行为分析大师。你从不用模板化的方式解读一个人——每个人在你眼里都是独一无二的故事。你的文字像在跟朋友聊天，但洞察力像手术刀一样精准。用中文回复。"},
                     {"role": "user", "content": prompt},
                 ],
-                "temperature": 0.8,
+                "temperature": 0.9,
                 "max_tokens": 2000,
                 "response_format": {"type": "json_object"},
             },
             timeout=60,
         )
+        print(f"[Persona] 📡 HTTP 状态码: {resp.status_code}")
         resp.raise_for_status()
 
         content = resp.json()["choices"][0]["message"]["content"]
+        print(f"[Persona] ✅ 大模型返回成功，内容长度: {len(content)} 字")
         result = json.loads(content)
         result["source"] = "llm"
         result["model"] = LLM_MODEL
         result["generated_at"] = datetime.now().isoformat()
+        print(f"[Persona] 🎭 生成原型: {result.get('archetype', '未知')}")
+        print(f"[Persona] 🏷️ 标签数: {len(result.get('tags', []))}")
         return result
 
+    except requests.exceptions.ConnectionError as e:
+        print(f"[Persona] ❌ 大模型连接失败: {e}")
+        return None
+    except requests.exceptions.Timeout:
+        print(f"[Persona] ❌ 大模型调用超时 (60s)")
+        return None
+    except requests.exceptions.HTTPError as e:
+        print(f"[Persona] ❌ 大模型 HTTP 错误: {e}")
+        print(f"[Persona] ❌ 响应内容: {resp.text[:500] if resp else '无响应'}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"[Persona] ❌ 大模型返回 JSON 解析失败: {e}")
+        print(f"[Persona] ❌ 原始内容前500字: {content[:500]}")
+        return None
     except Exception as e:
-        print(f"[Persona] 大模型调用失败: {e}")
+        print(f"[Persona] ❌ 大模型调用异常: {type(e).__name__}: {e}")
         return None
 
 
@@ -261,27 +310,43 @@ def run():
     os.makedirs(WEB_DATA_DIR, exist_ok=True)
 
     if _is_cache_valid():
-        print("[Persona] 缓存有效，跳过生成")
+        print("[Persona] ⏭️ 缓存有效，跳过生成")
         return
 
-    print("[Persona] 收集观影数据...")
+    print("[Persona] ============================")
+    print("[Persona] 🎬 开始生成观影人格画像")
+    print("[Persona] ============================")
+
+    print("[Persona] 📊 收集观影数据...")
     data = collect_data()
+    print(f"[Persona] 📊 数据收集完成: {data['total_plays']} 条播放记录")
 
     result = None
 
     if LLM_API_KEY:
-        print(f"[Persona] 调用大模型 ({LLM_MODEL})...")
+        print(f"[Persona] 🔑 检测到 LLM_API_KEY，准备调用大模型...")
         result = call_llm(data)
+        if result:
+            print(f"[Persona] ✅✅✅ 大模型生成成功! ✅✅✅")
+        else:
+            print(f"[Persona] ⚠️ 大模型调用失败，降级为规则引擎...")
+    else:
+        print(f"[Persona] ⚠️ LLM_API_KEY 未配置，直接使用规则引擎...")
 
     if not result:
-        print("[Persona] 降级为规则引擎生成...")
+        print("[Persona] 📋 使用规则引擎生成...")
         result = generate_rule_based(data)
+        print(f"[Persona] ✅ 规则引擎生成完成")
 
     path = _persona_path()
     with open(path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    print(f"[Persona] 已生成 persona.json (source: {result.get('source')})")
+    source = result.get("source", "unknown")
+    print(f"[Persona] ============================")
+    print(f"[Persona] 📦 输出: {path}")
+    print(f"[Persona] 🏷️ 数据来源: {'🤖 大模型' if source == 'llm' else '📋 规则引擎' if source == 'rule_engine' else '❓ ' + source}")
+    print(f"[Persona] ============================")
 
 
 if __name__ == "__main__":
