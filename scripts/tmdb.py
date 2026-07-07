@@ -56,6 +56,51 @@ def _get_poster_url(poster_path: str | None, size: str = "w500") -> str | None:
     return f"{base}{poster_path}"
 
 
+def get_chinese_title(
+    tmdb_id: int | None = None,
+    title: str = "",
+    media_type: str = "movie",
+    year: int | None = None,
+) -> str | None:
+    """
+    获取媒体的中文标题。
+    优先使用 tmdb_id 直接查询（language=zh-CN 已在 _api_request 中设置），
+    没有则按标题搜索。
+    返回中文标题字符串，或 None。
+    """
+    if not TMDB_API_KEY:
+        return None
+
+    data = None
+
+    if tmdb_id:
+        try:
+            if media_type in ("movie",):
+                endpoint = f"/movie/{tmdb_id}"
+            else:
+                endpoint = f"/tv/{tmdb_id}"
+            data = _api_request(endpoint)
+        except requests.HTTPError:
+            pass
+
+    if not data and title:
+        search_type = "tv" if media_type in ("episode", "show") else "movie"
+        search_query = f"{title} {year}" if year else title
+        try:
+            result = _api_request(f"/search/{search_type}", {"query": search_query, "page": 1})
+            results = result.get("results", [])
+            if results:
+                data = results[0]
+        except requests.HTTPError:
+            return None
+
+    if not data:
+        return None
+
+    # TV 返回 name，电影返回 title
+    return data.get("name") or data.get("title")
+
+
 def get_tmdb_images(
     tmdb_id: int | None = None,
     title: str = "",

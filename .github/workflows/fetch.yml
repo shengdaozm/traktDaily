@@ -33,8 +33,11 @@ jobs:
           mkdir -p data/reports
           cp /tmp/data-repo/data/trakt.db data/trakt.db
           cp -r /tmp/data-repo/data/reports/. data/reports/ 2>/dev/null || true
+          cp /tmp/data-repo/data/user_ratings.json data/user_ratings.json 2>/dev/null || true
           mkdir -p web/public/data
           cp -r /tmp/data-repo/web/public/data/. web/public/data/ 2>/dev/null || true
+          # 清理旧的数字分页格式 recent 文件（保留 recent_meta.json，已被月份格式替代）
+          find web/public/data -name 'recent_[0-9]*.json' -delete 2>/dev/null || true
 
       # ③ 配置 Python 环境
       - name: 配置 Python
@@ -58,6 +61,12 @@ jobs:
       # ⑤b 补全缺失的 TMDB 海报
       - name: 补全 TMDB 海报
         run: python -m scripts.backfill_posters
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
+      # ⑤b-2 生成用户评分模板（预填充已看过内容 + 中文名）
+      - name: 生成评分模板
+        run: python -m scripts.init_ratings
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
@@ -91,6 +100,10 @@ jobs:
           cp data/trakt.db /tmp/data-repo/data/trakt.db
           mkdir -p /tmp/data-repo/data/reports
           cp -r data/reports/. /tmp/data-repo/data/reports/ 2>/dev/null || true
+          # 同步评分文件到私有仓库
+          cp data/user_ratings.json /tmp/data-repo/data/user_ratings.json 2>/dev/null || true
+          # 先清理私有仓库中的旧 recent 文件，再同步（render.py 已重新生成所有 recent 文件）
+          rm -f /tmp/data-repo/web/public/data/recent_*.json
           mkdir -p /tmp/data-repo/web/public/data
           cp -r web/public/data/. /tmp/data-repo/web/public/data/ 2>/dev/null || true
           cd /tmp/data-repo
