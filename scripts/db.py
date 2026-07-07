@@ -818,6 +818,13 @@ def load_user_ratings() -> dict:
     else:
         return {"ratings": [], "meta": {}}
 
+    # 归一化：用户评分使用 0-100 制，内部处理统一为 0-10 制
+    RATING_SCALE = 100
+    for r in ratings:
+        ur = r.get("user_rating")
+        if ur is not None and ur > 10:
+            r["user_rating"] = round(ur / RATING_SCALE * 10, 1)
+
     rated = [r for r in ratings if r.get("user_rating") is not None]
     return {"ratings": rated, "meta": meta, "_all_ratings": ratings}
 

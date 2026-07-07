@@ -168,7 +168,7 @@ def run(limit: int = 200):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     print(f"[Ratings] 已生成 {USER_RATINGS_PATH}")
-    print(f"[Ratings] 请编辑该文件，填入你的评分（user_rating: 1-10）")
+    print(f"[Ratings] 请编辑该文件，填入你的评分（user_rating: 1-100）")
 
 
 if __name__ == "__main__":
