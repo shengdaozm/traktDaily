@@ -43,7 +43,7 @@ def _get_model():
         from sentence_transformers import SentenceTransformer
         _model = SentenceTransformer(MODEL_NAME)
         elapsed = time.time() - t0
-        print(f"[Embedding] ✅ 模型加载完成，耗时 {elapsed:.1f}s，维度: {_model.get_sentence_embedding_dimension()}")
+        print(f"[Embedding] ✅ 模型加载完成，耗时 {elapsed:.1f}s，维度: {_model.get_embedding_dimension()}")
     except ImportError:
         print(f"[Embedding] ❌ sentence-transformers 未安装，请 pip install sentence-transformers")
         raise
@@ -203,7 +203,12 @@ def _compute_user_taste_vector(cache: dict) -> list[float] | None:
     计算用户口味向量 = 用户打分≥7的剧的 embedding 加权平均。
     权重 = 用户评分（归一化）。
     """
-    rated = load_user_ratings()
+    rated_data = load_user_ratings()
+    if not rated_data:
+        print("[Embedding] ⚠️ 无评分数据，无法计算用户口味向量")
+        return None
+    
+    rated = rated_data.get("ratings", []) if isinstance(rated_data, dict) else rated_data
     if not rated:
         print("[Embedding] ⚠️ 无评分数据，无法计算用户口味向量")
         return None
@@ -215,8 +220,8 @@ def _compute_user_taste_vector(cache: dict) -> list[float] | None:
         rating = r.get("user_rating")
         emb = cache.get("embeddings", {}).get(tid)
         if emb and rating and rating > 0:
-            # 归一化评分到 0-10
-            norm_rating = rating / 10 if rating <= 10 else rating / 100 * 10
+            # 评分已在 load_user_ratings 中归一化到 0-10
+            norm_rating = rating
             if norm_rating >= 7:
                 valid.append((emb["vector"], norm_rating))
 
