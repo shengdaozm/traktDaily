@@ -35,11 +35,10 @@ from scripts.db import (
 from scripts.profile_builder import build_profile
 
 
-# 各因子权重
+# 各因子权重（f_keyword + f_content 合并为 f_semantic，权重提升）
 WEIGHTS = {
     "f_genre": 0.20,
-    "f_keyword": 0.15,
-    "f_content": 0.15,
+    "f_semantic": 0.25,  # 语义相似度（embedding），替代原来的 f_keyword + f_content
     "f_cf": 0.10,
     "f_network": 0.10,
     "f_structure": 0.10,
@@ -100,60 +99,32 @@ def f_genre(show: dict, profile: dict) -> float:
     return round(max(matching_scores) * 0.6 + sum(matching_scores) / len(matching_scores) * 0.4, 1)
 
 
-def f_keyword(show: dict, profile: dict) -> float:
-    """关键词/主题匹配分（加权 Jaccard，0-100）。"""
-    content = profile.get("content_profile", {})
-    high_keywords = set(content.get("keyword_affinity", {}).get("high", []))
-    low_keywords = set(content.get("keyword_affinity", {}).get("low", []))
-
-    if not high_keywords and not low_keywords:
+def f_semantic(show: dict, profile: dict, embedding_cache: dict | None = None) -> float:
+    """语义相似度（embedding 余弦相似度，0-100）。
+    
+    使用 sentence-transformers 对剧的标题+简介+类型做 embedding，
+    与用户口味向量（高分剧 embedding 加权平均）计算余弦相似度。
+    替代原来的 f_keyword（Jaccard 分词）和 f_content（文本重叠）。
+    """
+    if not embedding_cache:
         return 50.0
-
-    # 从 show 的 overview/title 提取关键词
-    text = (show.get("overview") or "") + " " + (show.get("title") or "")
-    words = set(w.lower() for w in text.replace(".", " ").replace(",", " ").split() if len(w) > 2)
-
-    if not words:
+    
+    user_vec = embedding_cache.get("user_taste_vector")
+    if not user_vec:
         return 50.0
-
-    # Jaccard 相似度（加分词 - 减分词）
-    high_overlap = len(words & high_keywords) / max(len(words | high_keywords), 1)
-    low_overlap = len(words & low_keywords) / max(len(words | low_keywords), 1)
-
-    score = (high_overlap - low_overlap * 0.5) * 100
-    return round(max(0, min(100, score + 50)), 1)  # 居中到 50
-
-
-def f_content(show: dict, profile: dict, rated_shows: list[dict], media_map: dict) -> float:
-    """内容相似度（与用户高分剧的文本重叠，0-100）。"""
-    # 获取用户高分剧（rating >= 7）的关键词集合
-    show_ids_in_db = {r.get("trakt_id") for r in rated_shows if r.get("user_rating", 0) >= 7}
-
-    if not show_ids_in_db:
+    
+    trakt_id = str(show.get("trakt_id", ""))
+    emb_data = embedding_cache.get("embeddings", {}).get(trakt_id)
+    if not emb_data:
         return 50.0
-
-    # 收集高分剧的关键词
-    high_rated_words: set[str] = set()
-    for sid in show_ids_in_db:
-        media = media_map.get(sid)
-        if media:
-            text = (media.get("overview") or "") + " " + (media.get("title") or "")
-            words = {w.lower() for w in text.replace(".", " ").replace(",", " ").split() if len(w) > 2}
-            high_rated_words |= words
-
-    if not high_rated_words:
-        return 50.0
-
-    # 新剧关键词
-    show_text = (show.get("overview") or "") + " " + (show.get("title") or "")
-    show_words = {w.lower() for w in show_text.replace(".", " ").replace(",", " ").split() if len(w) > 2}
-
-    if not show_words:
-        return 50.0
-
-    # 简单重叠度
-    overlap = len(show_words & high_rated_words) / max(len(show_words | high_rated_words), 1)
-    return round(max(0, min(100, overlap * 100 + 30)), 1)  # 偏移 30 分
+    
+    # 余弦相似度范围大约 -1 到 1，实际多为 0-1
+    # 映射到 0-100：similarity 0.3 → 50, 0.8 → 100
+    from scripts.embedding import _cosine_similarity
+    sim = _cosine_similarity(user_vec, emb_data["vector"])
+    # 线性映射：0 → 20, 0.5 → 70, 1.0 → 100
+    score = max(0, min(100, sim * 80 + 20))
+    return round(score, 1)
 
 
 def f_cf(show: dict, profile: dict) -> float:
@@ -298,18 +269,10 @@ def score_show(
     show: dict,
     rated_shows: list[dict] | None = None,
     media_map: dict | None = None,
+    embedding_cache: dict | None = None,
 ) -> dict:
     """
     对一部剧进行综合打分。
-    返回:
-        {
-            "total_score": 78.5,
-            "breakdown": {
-                "f_genre": {"score": 85.0, "weight": 0.20, "weighted": 17.0},
-                ...
-            },
-            "reason": ["类型匹配度高", "社区评分优秀"],
-        }
     """
     if rated_shows is None:
         rated_shows = get_rated_shows()
@@ -318,12 +281,14 @@ def score_show(
         rows = conn.execute("SELECT * FROM media").fetchall()
         conn.close()
         media_map = {r["trakt_id"]: dict(r) for r in rows}
+    if embedding_cache is None:
+        from scripts.embedding import _load_cache
+        embedding_cache = _load_cache()
 
     # 计算各因子
     scores = {}
     scores["f_genre"] = f_genre(show, profile)
-    scores["f_keyword"] = f_keyword(show, profile)
-    scores["f_content"] = f_content(show, profile, rated_shows, media_map)
+    scores["f_semantic"] = f_semantic(show, profile, embedding_cache)
     scores["f_cf"] = f_cf(show, profile)
     scores["f_network"] = f_network(show, profile)
     scores["f_structure"] = f_structure(show, profile)
@@ -355,8 +320,7 @@ def score_show(
     sorted_factors = sorted(breakdown.items(), key=lambda x: x[1]["weighted"], reverse=True)
     factor_names = {
         "f_genre": "类型匹配",
-        "f_keyword": "关键词契合",
-        "f_content": "内容相似",
+        "f_semantic": "语义相似",
         "f_cf": "社区口碑",
         "f_network": "出品方偏好",
         "f_structure": "结构匹配",
@@ -388,6 +352,7 @@ def score_show(
 def batch_score(
     profile: dict,
     show_list: list[dict],
+    embedding_cache: dict | None = None,
 ) -> list[dict]:
     """批量打分。"""
     rated_shows = get_rated_shows()
@@ -395,10 +360,14 @@ def batch_score(
     rows = conn.execute("SELECT * FROM media").fetchall()
     conn.close()
     media_map = {r["trakt_id"]: dict(r) for r in rows}
+    
+    if embedding_cache is None:
+        from scripts.embedding import _load_cache
+        embedding_cache = _load_cache()
 
     results = []
     for show in show_list:
-        result = score_show(profile, show, rated_shows, media_map)
+        result = score_show(profile, show, rated_shows, media_map, embedding_cache)
         results.append(result)
 
     # 按总分降序排列

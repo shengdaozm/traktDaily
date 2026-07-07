@@ -19,7 +19,7 @@ permissions:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       # ① 检出公开仓库代码
@@ -34,6 +34,7 @@ jobs:
           cp /tmp/data-repo/data/trakt.db data/trakt.db
           cp -r /tmp/data-repo/data/reports/. data/reports/ 2>/dev/null || true
           cp /tmp/data-repo/data/user_ratings.json data/user_ratings.json 2>/dev/null || true
+          cp /tmp/data-repo/data/embeddings.json data/embeddings.json 2>/dev/null || true
           mkdir -p web/public/data
           cp -r /tmp/data-repo/web/public/data/. web/public/data/ 2>/dev/null || true
           # 清理旧的数字分页格式 recent 文件（保留 recent_meta.json，已被月份格式替代）
@@ -85,6 +86,13 @@ jobs:
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
+      # ⑤e 生成语义 Embedding（本地模型，首次运行需下载）
+      - name: 生成语义 Embedding
+        run: python -m scripts.embedding
+        env:
+          TRANSFORMERS_CACHE: /tmp/transformers_cache
+        continue-on-error: true
+
       # ⑥ 生成前端 JSON 数据（内部已调用 render_profile 生成画像/推荐 JSON）
       - name: 生成前端数据
         run: python -m scripts.render
@@ -102,6 +110,7 @@ jobs:
           cp -r data/reports/. /tmp/data-repo/data/reports/ 2>/dev/null || true
           # 同步评分文件到私有仓库
           cp data/user_ratings.json /tmp/data-repo/data/user_ratings.json 2>/dev/null || true
+          cp data/embeddings.json /tmp/data-repo/data/embeddings.json 2>/dev/null || true
           # 先清理私有仓库中的旧 recent 文件，再同步（render.py 已重新生成所有 recent 文件）
           rm -f /tmp/data-repo/web/public/data/recent_*.json
           mkdir -p /tmp/data-repo/web/public/data

@@ -32,6 +32,7 @@ from scripts.db import (
 from scripts.profile_builder import build_profile
 from scripts.bias_correction import compute_cast_preferences, generate_bias_report, get_media_cast_map
 from scripts.scoring_engine import batch_score
+from scripts.embedding import generate_embeddings, _load_cache as load_embedding_cache
 
 
 def _write_json(filename: str, data: dict):
@@ -127,6 +128,9 @@ def run(force: bool = False, with_recommendations: bool = True, rec_limit: int =
 
     # ── 4. 推荐列表 ──
     if with_recommendations:
+        print("[RenderProfile] 生成语义 Embedding...")
+        embedding_cache = generate_embeddings()
+        
         print("[RenderProfile] 生成推荐列表...")
         media_map = _get_media_map()
 
@@ -148,7 +152,7 @@ def run(force: bool = False, with_recommendations: bool = True, rec_limit: int =
         unseen = [c for c in candidates if c.get("trakt_id") not in watched_ids]
 
         if unseen:
-            recommendations = batch_score(profile, unseen)
+            recommendations = batch_score(profile, unseen, embedding_cache)
             # 取 Top N
             top_recs = recommendations[:rec_limit]
 
