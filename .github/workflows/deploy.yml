@@ -70,8 +70,6 @@ jobs:
           npm install
           npm run build
         working-directory: web/
-        env:
-          VITE_TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
       # ⑤ 上传 Pages 产物
       - name: 上传 Pages 产物
