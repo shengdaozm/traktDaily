@@ -97,6 +97,7 @@ jobs:
       - name: 生成前端数据
         run: python -m scripts.render
         env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           LLM_API_BASE: ${{ secrets.LLM_API_BASE }}
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
