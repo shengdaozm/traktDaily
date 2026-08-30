@@ -6,8 +6,8 @@ on:
   push:
     branches: [main]
   schedule:
-    # 每 2 小时运行一次（UTC 时间）
-    - cron: '0 */2 * * *'
+    # 每 24 小时运行一次（UTC 时间）
+    - cron: '0 */24 * * *'
   # 允许手动触发（用于首次运行或调试）
   workflow_dispatch:
 
